@@ -6,6 +6,14 @@
   },
   "allowedNonPeerDependencies": [],
   "assets": [
+    {
+      "glob": "**/*",
+      "input": "native",
+      "output": "native",
+      "ignore": [
+        "**/*_test.go"
+      ]
+    },
     "AGENTS.md"
   ]
 }

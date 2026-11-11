@@ -6,10 +6,20 @@ Instructions for AI coding agents building a Go + Wails v3 desktop app with `@sp
 
 The `NativeHost` adapter for Wails v3 (Layer 04). It has two halves that work together:
 
-- **Go service** (module `github.com/spartan-native/host-wails/native`, in the repo's `packages/hosts/host-wails/native`). It reads the real OS settings, pushes changes live, and shows native menus and dialogs.
+- **Go service** (module `github.com/spartan-native/host-wails/native`). It ships inside this npm package, in `native/`. It reads the real OS settings, pushes changes live, and shows native menus and dialogs.
 - **TypeScript adapter** (this npm package). `wailsHost()` implements the contract from `@spartan-native/theme` over the Wails runtime (`@wailsio/runtime`, imported lazily).
 
 ## Set up
+
+The Go module isn't on the Go module proxy, so `go get` can't fetch it. Point `go.mod` at the copy inside this package instead (the path is relative to `go.mod`; here the Angular app is in `frontend/`):
+
+```
+// go.mod
+require github.com/spartan-native/host-wails/native v0.0.0
+replace github.com/spartan-native/host-wails/native => ./frontend/node_modules/@spartan-native/host-wails/native
+```
+
+Then run `go mod tidy`. Install the npm package before building the Go side.
 
 ```go
 // main.go: register the service; nothing else to wire

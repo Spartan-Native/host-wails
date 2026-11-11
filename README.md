@@ -53,7 +53,7 @@ Changes are detected by Wails' `common:ThemeChanged` event and a 1-second poll f
 | Path | What it is |
 | --- | --- |
 | `src/lib/wails-host.ts` | `wailsHost()`, `isWails()`; the Wails runtime is imported lazily (or injected for tests) |
-| `native/` | Go module `github.com/spartan-native/host-wails/native`: `service.go`, `menus.go`, `dialogs.go`, one `appearance_<os>.go` per OS, tests |
+| `native/` | Go module `github.com/spartan-native/host-wails/native`: `service.go`, `menus.go`, `dialogs.go`, one `appearance_<os>.go` per OS, tests. It ships in the npm package, without the tests. Apps use it with `replace github.com/spartan-native/host-wails/native => ./frontend/node_modules/@spartan-native/host-wails/native` in `go.mod` |
 
 ## Tests
 
