@@ -9,7 +9,7 @@ import {
 } from '@spartan-native/theme';
 
 /** The Go service's bound-method prefix: `<Go package path>.<type>`. */
-export const DEFAULT_SERVICE = 'github.com/spartan-native/host-wails/native.Service';
+export const DEFAULT_SERVICE = 'github.com/spartan-native/host-wails.Service';
 /** The event the Go service emits on every appearance change. */
 export const APPEARANCE_EVENT = 'spartan-native:appearance';
 /** The event the Go service emits with an item's id when a native menu item is chosen. */
@@ -51,7 +51,7 @@ const INITIAL: Partial<HostCapabilities> = {
 
 /**
  * NativeHost for Go + Wails v3. Reads the real OS settings through the Go service
- * (github.com/spartan-native/host-wails/native), live, and owns the window:
+ * (github.com/spartan-native/host-wails), live, and owns the window:
  * desktop-ui's window controls minimize, maximize and close it. Native menus too:
  * desktop-ui's menubar becomes the macOS global menu bar, and its context menus are
  * the OS's own. File dialogs and alerts are the OS's too (`host.dialogs`).

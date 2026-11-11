@@ -1,0 +1,62 @@
+# Tests both halves of the adapter: the Go module (repository root) and the npm package (npm/).
+# Also called by release.yml before anything is published.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go module
+    # macOS: the darwin reader uses cgo, and Windows and Linux are checked by cross-vetting.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet (darwin, windows, linux)
+        run: |
+          go vet ./...
+          GOOS=windows go vet ./...
+          GOOS=linux go vet -tags purego ./...
+
+  npm:
+    name: npm package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Installs @spartan-native/theme and @spartan-native/host-conformance from GitHub Packages.
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@spartan-native'
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm ci
+
+      - name: Test (adapter + host-conformance suite)
+        run: npm test
+
+      - name: Build
+        run: npm run build

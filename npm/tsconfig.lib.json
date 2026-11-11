@@ -1,7 +1,7 @@
 {
-  "extends": "../../../tsconfig.lib.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../out-tsc/lib",
+    "outDir": "../out-tsc/lib",
     "declaration": true,
     "declarationMap": true,
     "types": []
@@ -10,7 +10,6 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "**/*.spec.ts",
-    "native/**"
+    "**/*.spec.ts"
   ]
 }

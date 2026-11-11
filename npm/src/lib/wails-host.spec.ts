@@ -73,7 +73,7 @@ describe('wailsHost', () => {
     const host = wailsHost({ runtime });
     expect(await host.appearance()).toMatchObject({ accent: '#e66100', scheme: 'dark' });
     expect((await host.platform()).build).toBe(26100);
-    expect(calls).toContain('github.com/spartan-native/host-wails/native.Service.Appearance');
+    expect(calls).toContain('github.com/spartan-native/host-wails.Service.Appearance');
   });
 
   it('takes the capabilities the OS reports', async () => {

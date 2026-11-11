@@ -1,79 +1,33 @@
-# AGENTS.md: @spartan-native/host-wails
+# AGENTS.md
 
-Instructions for AI coding agents building a Go + Wails v3 desktop app with `@spartan-native/host-wails`.
+Instructions for AI coding agents working in this repository. (`npm/AGENTS.md` is a different file: it ships in the npm package, for agents building apps **with** the adapter.)
 
-## What this package is
+## Layout
 
-The `NativeHost` adapter for Wails v3 (Layer 04). It has two halves that work together:
+- **Repository root:** the Go module `github.com/spartan-native/host-wails` (package `spartannative`).
+- **`npm/`:** the npm package `@spartan-native/host-wails`, built with ng-packagr (`angular.json` project `host-wails`).
 
-- **Go service** (module `github.com/spartan-native/host-wails/native`). It ships inside this npm package, in `native/`. It reads the real OS settings, pushes changes live, and shows native menus and dialogs.
-- **TypeScript adapter** (this npm package). `wailsHost()` implements the contract from `@spartan-native/theme` over the Wails runtime (`@wailsio/runtime`, imported lazily).
+## Keep the two halves in sync
 
-## Set up
+The halves talk through names the compilers can't check. Change both sides in the same commit:
 
-The Go module isn't on the Go module proxy, so `go get` can't fetch it. Point `go.mod` at the copy inside this package instead (the path is relative to `go.mod`; here the Angular app is in `frontend/`):
+- **Bound methods.** Wails names a bound method `<Go package path>.<Type>.<Method>`. `DEFAULT_SERVICE` in `npm/src/lib/wails-host.ts` must be `github.com/spartan-native/host-wails.Service`, matching the `module` line in `go.mod`. Renaming a Go method means changing the `call('…')` name in the adapter.
+- **Events.** `spartan-native:appearance` and `spartan-native:menu-action` (`EventAppearance`, `EventMenuAction` in Go; `APPEARANCE_EVENT`, `MENU_ACTION_EVENT` in TypeScript).
+- **Data shapes.** The structs in `types.go`, `menus.go` and `dialogs.go` must keep producing the JSON the contract types in `@spartan-native/theme` describe.
 
-```
-// go.mod
-require github.com/spartan-native/host-wails/native v0.0.0
-replace github.com/spartan-native/host-wails/native => ./frontend/node_modules/@spartan-native/host-wails/native
-```
+The fake runtime in `npm/src/lib/wails-host.spec.ts` stands in for the Go service. Update it when the Go side changes.
 
-Then run `go mod tidy`. Install the npm package before building the Go side.
+## Checks
 
-```go
-// main.go: register the service; nothing else to wire
-import spartannative "github.com/spartan-native/host-wails/native"
-
-app := application.New(application.Options{
-	Services: []application.Service{application.NewService(spartannative.New())},
-})
-// options: spartannative.WithSkin("gtk"), spartannative.WithPollInterval(500*time.Millisecond)
-// debug:   SPARTAN_NATIVE_DEBUG=1
-```
-
-```ts
-// app.config.ts: same frontend in the browser and in Wails
-import { isWails, wailsHost } from '@spartan-native/host-wails';
-import { webHost } from '@spartan-native/host-web';
-
-providers: [provideSpartanNative({ host: isWails() ? wailsHost() : webHost() })]
-```
-
-For a custom title bar, use a frameless window on Windows and Linux and the hidden-inset title bar on macOS. `<sn-title-bar>` is already a `--wails-draggable` region.
-
-## Public API (`import … from '@spartan-native/host-wails'`)
-
-| Symbol | Use |
+| Command | Use it for |
 | --- | --- |
-| `wailsHost({ service?, runtime? })` | The host. `runtime` injects a fake Wails runtime for tests |
-| `isWails(location?)` | True inside a Wails webview |
-| `DEFAULT_SERVICE`, `APPEARANCE_EVENT`, `MENU_ACTION_EVENT` | The bound-method prefix and event names, for custom setups and tests |
-| `WailsRuntimeLike` | The runtime surface the adapter uses |
+| `npm test` | Adapter tests and the host-conformance suite |
+| `npm run build` | Checking that the npm package compiles |
+| `go test ./...` | Go tests |
+| `npm run vet:go` | Vetting the Windows and Linux code from any OS |
 
-## What the app gets
+## Docs
 
-| Service | Notes |
-| --- | --- |
-| Appearance | Real OS values: accent, scheme, contrast, transparency, motion, text size; live |
-| `window` | Focus, `minimize()`, `toggleMaximize()`, `close()`, `isMaximized()`, `onMaximizedChange()`. desktop-ui's window buttons use them automatically |
-| `menus` | `setApplicationMenu`, `showContextMenu`, `onAction`. Native on macOS. Partial on Windows and Linux: context menus are native, but the app menu only reaches windows created after it is set. Use `<sn-menubar>` and `[snContextMenu]`, not the raw service |
-| `dialogs` | The OS's own `openFile`, `saveFile`, `pickFolder` and `message`. Files come back with a `path`. Cancelled dialogs give `[]` / `null` |
-| `notifications` | Not specified yet |
+When you add, rename or remove a public export, option, Go option or host service, update `npm/AGENTS.md` and `npm/README.md` in the same change. `npm/AGENTS.md` must only refer to other packages by name (`@spartan-native/theme`), never by path, because the repository isn't there once the package is installed.
 
-```ts
-const host = inject(NATIVE_HOST);
-const [file] = await host.dialogs!.openFile({ filters: [{ name: 'Backups', extensions: ['hbk'] }] });
-const answer = await host.dialogs!.message!({
-  kind: 'question', message: 'Save changes?',
-  buttons: [{ id: 'save', label: 'Save' }, { id: 'discard', label: "Don't save" }, { id: 'cancel', label: 'Cancel' }],
-  defaultId: 'save', cancelId: 'cancel',
-});
-```
-
-## Rules
-
-1. **Always pass `cancelId` to `message()`.** GTK lets the user close an alert without pressing a button, and then the call doesn't resolve.
-2. Don't call `@wailsio/runtime` or the Go service's bound methods directly from components. Go through `SpartanNativeTheme` or `NATIVE_HOST`, so the app keeps working in the browser.
-3. Don't register a second appearance or menu service in Go. `spartannative.New()` owns the `spartan-native:*` events.
-4. To test without Wails, pass `wailsHost({ runtime: fake })` and run `describeHostConformance` from `@spartan-native/host-conformance`.
+The spartan-native repository's agent skill (`tools/claude-plugin`) describes how apps set up this host. If a change affects app setup, say so in your summary so it can be updated there.

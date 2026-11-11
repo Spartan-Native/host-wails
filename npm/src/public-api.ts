@@ -3,6 +3,6 @@
  *
  *   provideSpartanNative({ host: wailsHost() })
  *
- * The Go side lives in native/ (module github.com/spartan-native/host-wails/native).
+ * The Go side is the Go module github.com/spartan-native/host-wails; install it with `go get`.
  */
 export * from './lib/wails-host';

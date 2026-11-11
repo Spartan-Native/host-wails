@@ -1,4 +1,4 @@
-module github.com/spartan-native/host-wails/native
+module github.com/spartan-native/host-wails
 
 go 1.26.0
 

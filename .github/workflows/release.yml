@@ -1,0 +1,96 @@
+# Releases both halves of the adapter from one tag:
+#   - the Go module github.com/spartan-native/host-wails is released by the tag itself
+#     (go get github.com/spartan-native/host-wails@v1.2.3); nothing to upload,
+#   - the npm package @spartan-native/host-wails is published to GitHub Packages.
+#
+# Release tags (Go only recognizes tags that start with "v"):
+#   v1.2.3                        -> npm 1.2.3 on dist-tag "latest"
+#   v1.2.3-beta / v1.2.3-beta.4   -> npm 1.2.3-beta.4 on dist-tag "beta"
+#
+# Any other tag publishes nothing.
+#
+#   git tag v1.2.3 && git push origin v1.2.3
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Check tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      dist-tag: ${{ steps.parse.outputs.dist-tag }}
+    steps:
+      - id: parse
+        name: Parse semantic version from tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
+            echo "Stable release ${BASH_REMATCH[1]}"
+          elif [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+-beta(\.[0-9]+)?)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "dist-tag=beta" >> "$GITHUB_OUTPUT"
+            echo "Beta release ${BASH_REMATCH[1]}"
+          else
+            echo "::notice::Tag '$TAG' is not vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-beta[.n]; nothing to publish."
+          fi
+
+  ci:
+    name: CI
+    needs: version
+    if: needs.version.outputs.version != ''
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      packages: read
+
+  publish:
+    name: Publish npm package
+    needs: [version, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      DIST_TAG: ${{ needs.version.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@spartan-native'
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Stamp version ${{ env.VERSION }}
+        run: node scripts/stamp-release.mjs "$VERSION"
+
+      - name: Publish to GitHub Packages (${{ env.DIST_TAG }})
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish dist/host-wails --tag "$DIST_TAG"
