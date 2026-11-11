@@ -25,6 +25,10 @@ function fakeWails(initial: Partial<AppearanceState> = {}) {
         if (name === `${DEFAULT_SERVICE}.SetApplicationMenu` || name === `${DEFAULT_SERVICE}.ShowContextMenu`) return undefined;
         if (name === `${DEFAULT_SERVICE}.Platform`) return platform;
         if (name === `${DEFAULT_SERVICE}.Appearance`) return appearance;
+        if (name === `${DEFAULT_SERVICE}.OpenFile`) return null; // Go's nil slice: a cancelled dialog
+        if (name === `${DEFAULT_SERVICE}.SaveFile`) return { name: 'Report.pdf', path: '/home/me/Report.pdf' };
+        if (name === `${DEFAULT_SERVICE}.PickFolder`) return null;
+        if (name === `${DEFAULT_SERVICE}.Message`) return 'save';
         if (name === `${DEFAULT_SERVICE}.Capabilities`) return { textScale: 'native', taskbarProgress: 'none' };
         throw new Error(`unknown method ${name}`);
       },
@@ -120,5 +124,20 @@ describe('wailsHost', () => {
     off();
     emit('spartan-native:menu-action', 'ignored');
     expect(chosen).toEqual(['new']);
+  });
+
+  it('shows the OS file dialogs and alerts through the Go service', async () => {
+    const { runtime, args } = fakeWails();
+    const host = wailsHost({ runtime });
+    const filters = [{ name: 'PDF', extensions: ['pdf'] }];
+
+    expect(await host.dialogs!.openFile({ filters, multiple: true })).toEqual([]);
+    expect(args[`${DEFAULT_SERVICE}.OpenFile`]).toEqual([{ filters, multiple: true }]);
+    expect(await host.dialogs!.saveFile({ fileName: 'Report.pdf' })).toEqual({ name: 'Report.pdf', path: '/home/me/Report.pdf' });
+    expect(await host.dialogs!.pickFolder()).toBeNull();
+    expect(args[`${DEFAULT_SERVICE}.PickFolder`]).toEqual([{}]);
+
+    const buttons = [{ id: 'cancel', label: 'Cancel' }, { id: 'save', label: 'Save' }];
+    expect(await host.dialogs!.message!({ kind: 'question', message: 'Save changes?', buttons, defaultId: 'save', cancelId: 'cancel' })).toBe('save');
   });
 });

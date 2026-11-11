@@ -3,6 +3,7 @@ import {
   CAPABILITIES,
   type HostCapabilities,
   type NativeHost,
+  type PickedFile,
   type PlatformInfo,
   type Unsubscribe,
 } from '@spartan-native/theme';
@@ -53,7 +54,7 @@ const INITIAL: Partial<HostCapabilities> = {
  * (github.com/spartan-native/host-wails/native), live, and owns the window:
  * desktop-ui's window controls minimize, maximize and close it. Native menus too:
  * desktop-ui's menubar becomes the macOS global menu bar, and its context menus are
- * the OS's own.
+ * the OS's own. File dialogs and alerts are the OS's too (`host.dialogs`).
  *
  * ```go
  * // main.go
@@ -123,6 +124,12 @@ export function wailsHost(options: WailsHostOptions = {}): NativeHost {
       setApplicationMenu: (menu) => call<void>('SetApplicationMenu', menu),
       showContextMenu: (menu, { x, y }) => call<void>('ShowContextMenu', menu, Math.round(x), Math.round(y)),
       onAction: (cb) => on(MENU_ACTION_EVENT, (id) => cb(String(id))),
+    },
+    dialogs: {
+      openFile: async (options = {}) => (await call<PickedFile[] | null>('OpenFile', options)) ?? [],
+      saveFile: async (options = {}) => (await call<PickedFile | null>('SaveFile', options)) ?? null,
+      pickFolder: async (options = {}) => (await call<PickedFile | null>('PickFolder', options)) ?? null,
+      message: async (options) => (await call<string | null>('Message', options)) ?? null,
     },
   };
 }

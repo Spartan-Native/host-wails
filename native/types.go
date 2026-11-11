@@ -13,6 +13,8 @@
 // the OS appearance changes (accent, light/dark, contrast, transparency,
 // motion, text size). SetApplicationMenu() and ShowContextMenu() show native
 // menus; a chosen item comes back as the "spartan-native:menu-action" event.
+// OpenFile(), SaveFile(), PickFolder() and Message() show the OS's file dialogs
+// and alerts.
 package spartannative
 
 // EventAppearance is emitted with an AppearanceState whenever a value changes.
