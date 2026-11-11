@@ -1,0 +1,24 @@
+{
+  "name": "@spartan-native/host-wails",
+  "version": "0.0.0",
+  "description": "NativeHost for Go + Wails v3: the real OS accent, light/dark, contrast, transparency, motion, text size and window focus, live; window minimize/maximize/close. Go side in native/.",
+  "keywords": [
+    "spartan-native",
+    "native-host",
+    "wails",
+    "go",
+    "desktop"
+  ],
+  "peerDependencies": {
+    "@spartan-native/theme": "0.0.0",
+    "@wailsio/runtime": "^3.1.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@spartan-native/host-conformance": "0.0.0",
+    "@wailsio/runtime": "^3.1.0"
+  }
+}
