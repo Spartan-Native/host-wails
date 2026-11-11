@@ -20,7 +20,7 @@
   },
   "files": [],
   "references": [
-    { "path": "./npm/tsconfig.lib.json" },
-    { "path": "./npm/tsconfig.spec.json" }
+    { "path": "./projects/host-wails/tsconfig.lib.json" },
+    { "path": "./projects/host-wails/tsconfig.spec.json" }
   ]
 }

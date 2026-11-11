@@ -63,6 +63,9 @@ jobs:
     name: Publish npm package
     needs: [version, ci]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: npm
     permissions:
       contents: read
       packages: write
@@ -74,8 +77,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: npm/.nvmrc
           cache: npm
+          cache-dependency-path: npm/package-lock.json
           registry-url: https://npm.pkg.github.com
           scope: '@spartan-native'
 
@@ -88,7 +92,7 @@ jobs:
         run: npm run build
 
       - name: Stamp version ${{ env.VERSION }}
-        run: node scripts/stamp-release.mjs "$VERSION"
+        run: npm run stamp-release -- "$VERSION"
 
       - name: Publish to GitHub Packages (${{ env.DIST_TAG }})
         env:

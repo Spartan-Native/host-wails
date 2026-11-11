@@ -1,6 +1,6 @@
 //go:build darwin
 
-package spartannative
+package appearance
 
 /*
 #cgo CFLAGS: -x objective-c -fobjc-arc
@@ -50,18 +50,18 @@ import "fmt"
 
 type darwinReader struct{}
 
-func newReader() reader { return darwinReader{} }
+func New() Reader { return darwinReader{} }
 
-func (darwinReader) platform() PlatformInfo {
+func (darwinReader) Platform() Platform {
 	a := C.snRead()
 	version := fmt.Sprintf("%d.%d.%d", int(a.major), int(a.minor), int(a.patch))
-	return PlatformInfo{
+	return Platform{
 		OS: "macos", Version: &version,
 		Skin: resolveSkin("macos", &version, nil, nil), Confidence: "exact",
 	}
 }
 
-func (darwinReader) appearance(skin string) AppearanceState {
+func (darwinReader) Appearance(skin string) Appearance {
 	a := C.snRead()
 	accent := stockAccent(skin)
 	if a.hasAccent != 0 {
@@ -74,7 +74,7 @@ func (darwinReader) appearance(skin string) AppearanceState {
 	if a.increaseContrast != 0 {
 		contrast = "more"
 	}
-	return AppearanceState{
+	return Appearance{
 		Skin:               skin,
 		Accent:             accent,
 		Scheme:             scheme,
@@ -85,7 +85,7 @@ func (darwinReader) appearance(skin string) AppearanceState {
 	}
 }
 
-func (darwinReader) capabilities() map[string]CapabilityLevel {
+func (darwinReader) Capabilities() map[string]CapabilityLevel {
 	return map[string]CapabilityLevel{
 		"systemAccent": Native, "colorScheme": Native, "highContrast": Native, "reduceTransparency": Native,
 		"textScale": None, "windowFocus": Native, "windowMaterial": Native, "customTitleBar": Native,

@@ -1,68 +1,35 @@
-// Package spartannative is the native side of @spartan-native/host-wails.
-//
-// Register the service with your Wails v3 application:
-//
-//	app := application.New(application.Options{
-//		Services: []application.Service{
-//			application.NewService(spartannative.New()),
-//		},
-//	})
-//
-// The frontend calls Platform(), Appearance() and Capabilities() through the
-// Wails bindings, and receives the "spartan-native:appearance" event whenever
-// the OS appearance changes (accent, light/dark, contrast, transparency,
-// motion, text size). SetApplicationMenu() and ShowContextMenu() show native
-// menus; a chosen item comes back as the "spartan-native:menu-action" event.
-// OpenFile(), SaveFile(), PickFolder() and Message() show the OS's file dialogs
-// and alerts.
 package spartannative
 
-// EventAppearance is emitted with an AppearanceState whenever a value changes.
-const EventAppearance = "spartan-native:appearance"
+import "github.com/spartan-native/host-wails/internal/contract"
 
-// PlatformInfo mirrors PlatformInfo in @spartan-native/theme.
-type PlatformInfo struct {
-	OS         string  `json:"os"`      // windows | macos | linux | chromeos | unknown
-	Version    *string `json:"version"` // "10.0.22631", "26.1", …
-	Build      *int    `json:"build"`   // Windows build; ≥ 22000 means Windows 11
-	Desktop    *string `json:"desktop"` // gnome | kde | cinnamon | xfce | other (Linux)
-	Skin       string  `json:"skin"`    // win | w10 | mac | macc | gtk | qt | cros | web
-	Confidence string  `json:"confidence"`
-}
-
-// AppearanceState mirrors AppearanceState in @spartan-native/theme.
-type AppearanceState struct {
-	Skin               string  `json:"skin"`
-	Accent             string  `json:"accent"`   // #rrggbb
-	Scheme             string  `json:"scheme"`   // light | dark
-	Contrast           string  `json:"contrast"` // normal | more | forced
-	ReduceTransparency bool    `json:"reduceTransparency"`
-	ReduceMotion       bool    `json:"reduceMotion"`
-	TextScale          float64 `json:"textScale"` // 1 = 100 %
-}
-
-// CapabilityLevel is native, partial or none.
-type CapabilityLevel = string
-
+// Events the service emits to the frontend.
 const (
-	Native  CapabilityLevel = "native"
-	Partial CapabilityLevel = "partial"
-	None    CapabilityLevel = "none"
+	// EventAppearance is emitted with an AppearanceState whenever a value changes.
+	EventAppearance = contract.EventAppearance
+	// EventMenuAction is emitted with an item's id when an item with an id is chosen,
+	// in the application menu or a context menu.
+	EventMenuAction = contract.EventMenuAction
 )
 
-// reader reads the OS. One implementation per OS (appearance_<os>.go); tests use a fake.
-type reader interface {
-	platform() PlatformInfo
-	appearance(skin string) AppearanceState
-	capabilities() map[string]CapabilityLevel
-}
+// The data the service exchanges with the frontend. Each type mirrors the type of the same
+// name in @spartan-native/theme; see internal/contract for the fields.
+type (
+	PlatformInfo      = contract.PlatformInfo
+	AppearanceState   = contract.AppearanceState
+	CapabilityLevel   = contract.CapabilityLevel
+	MenuItem          = contract.MenuItem
+	FileFilter        = contract.FileFilter
+	OpenFileOptions   = contract.OpenFileOptions
+	SaveFileOptions   = contract.SaveFileOptions
+	PickFolderOptions = contract.PickFolderOptions
+	PickedFile        = contract.PickedFile
+	MessageButton     = contract.MessageButton
+	MessageOptions    = contract.MessageOptions
+)
 
-func strPtr(s string) *string { return &s }
-func intPtr(i int) *int       { return &i }
-
-func deref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
+// Capability levels.
+const (
+	Native  = contract.Native
+	Partial = contract.Partial
+	None    = contract.None
+)

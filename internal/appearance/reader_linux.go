@@ -1,6 +1,6 @@
 //go:build linux
 
-package spartannative
+package appearance
 
 import (
 	"bufio"
@@ -28,22 +28,22 @@ type linuxReader struct {
 	conn *dbus.Conn
 }
 
-func newReader() reader { return &linuxReader{} }
+func New() Reader { return &linuxReader{} }
 
-func (r *linuxReader) platform() PlatformInfo {
+func (r *linuxReader) Platform() Platform {
 	desktop := linuxDesktop(os.Getenv("XDG_CURRENT_DESKTOP"))
 	var version *string
 	if v := osRelease("VERSION_ID"); v != "" {
 		version = strPtr(v)
 	}
-	return PlatformInfo{
+	return Platform{
 		OS: "linux", Version: version, Desktop: &desktop,
 		Skin: resolveSkin("linux", version, nil, &desktop), Confidence: "exact",
 	}
 }
 
-func (r *linuxReader) appearance(skin string) AppearanceState {
-	state := AppearanceState{Skin: skin, Accent: stockAccent(skin), Scheme: "light", Contrast: "normal", TextScale: 1}
+func (r *linuxReader) Appearance(skin string) Appearance {
+	state := Appearance{Skin: skin, Accent: stockAccent(skin), Scheme: "light", Contrast: "normal", TextScale: 1}
 
 	if v, ok := r.read(nsAppearance, "color-scheme"); ok {
 		if n, ok := v.(uint32); ok && n == 1 { // 1 = prefer dark
@@ -83,7 +83,7 @@ func (r *linuxReader) appearance(skin string) AppearanceState {
 	return state
 }
 
-func (r *linuxReader) capabilities() map[string]CapabilityLevel {
+func (r *linuxReader) Capabilities() map[string]CapabilityLevel {
 	// nativeMenus is partial: context menus are native, but a frameless window (custom title
 	// bar) doesn't show the window menu bar, so desktop-ui draws the menubar in the page.
 	return map[string]CapabilityLevel{

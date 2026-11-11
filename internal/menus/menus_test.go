@@ -1,4 +1,4 @@
-package spartannative
+package menus
 
 import (
 	"encoding/json"

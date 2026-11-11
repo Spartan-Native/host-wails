@@ -1,31 +1,21 @@
-package spartannative
+// Package menus builds native Wails menus from the contract's MenuItem data.
+package menus
 
 import (
 	"errors"
 	"runtime"
 	"strings"
 
+	"github.com/spartan-native/host-wails/internal/contract"
+	"github.com/spartan-native/host-wails/internal/debug"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// EventMenuAction is emitted with an item's id when an item with an id is chosen,
-// in the application menu or a context menu.
-const EventMenuAction = "spartan-native:menu-action"
+// MenuItem is the contract's menu item.
+type MenuItem = contract.MenuItem
 
-// contextMenuName is the one context menu the service registers; each ShowContextMenu replaces it.
+// contextMenuName is the one context menu the package registers; each ShowContext replaces it.
 const contextMenuName = "spartan-native:context-menu"
-
-// MenuItem mirrors MenuItem in @spartan-native/theme.
-type MenuItem struct {
-	ID          string     `json:"id,omitempty"`
-	Label       string     `json:"label,omitempty"`
-	Type        string     `json:"type,omitempty"`        // normal | checkbox | radio | separator
-	Accelerator string     `json:"accelerator,omitempty"` // portable notation: mod+shift+s
-	Enabled     *bool      `json:"enabled,omitempty"`     // default true
-	Checked     bool       `json:"checked,omitempty"`
-	Role        string     `json:"role,omitempty"`
-	Submenu     []MenuItem `json:"submenu,omitempty"`
-}
 
 // roles maps the contract's MenuRole names to Wails roles.
 var roles = map[string]application.Role{
@@ -171,35 +161,24 @@ func buildItem(item MenuItem, onAction func(id string)) *application.MenuItem {
 	return mi
 }
 
-// --- Bound methods (called from @spartan-native/host-wails) -------------------
-
-var errNoApp = errors.New("spartan-native: no running Wails application")
-
-// SetApplicationMenu sets the global menu bar on macOS. On Windows and Linux, Wails 3.1 gives the
+// SetApplication sets the global menu bar on macOS. On Windows and Linux, Wails 3.1 gives the
 // application menu to windows created after the call. An empty menu restores Wails' default.
-func (s *Service) SetApplicationMenu(items []MenuItem) error {
-	app := application.Get()
-	if app == nil {
-		return errNoApp
-	}
+// onAction gets the id of a chosen item.
+func SetApplication(app *application.App, items []MenuItem, onAction func(id string)) {
 	resolved := resolveMenu(items, runtime.GOOS)
-	debugf("SetApplicationMenu(%d items)", len(resolved))
+	debug.Logf("SetApplicationMenu(%d items)", len(resolved))
 	application.InvokeSync(func() {
 		if len(resolved) == 0 {
 			app.Menu.SetApplicationMenu(nil) // Wails' default menu for the OS
 			return
 		}
-		app.Menu.SetApplicationMenu(buildMenu(resolved, s.menuAction))
+		app.Menu.SetApplicationMenu(buildMenu(resolved, onAction))
 	})
-	return nil
 }
 
-// ShowContextMenu opens a native context menu at x, y (CSS pixels in the current window).
-func (s *Service) ShowContextMenu(items []MenuItem, x, y int) error {
-	app := application.Get()
-	if app == nil {
-		return errNoApp
-	}
+// ShowContext opens a native context menu at x, y (CSS pixels in the current window).
+// onAction gets the id of a chosen item.
+func ShowContext(app *application.App, items []MenuItem, x, y int, onAction func(id string)) error {
 	window := app.Window.Current()
 	if window == nil {
 		if all := app.Window.GetAll(); len(all) > 0 {
@@ -210,20 +189,12 @@ func (s *Service) ShowContextMenu(items []MenuItem, x, y int) error {
 		return errors.New("spartan-native: no window for the context menu")
 	}
 	resolved := resolveMenu(items, runtime.GOOS)
-	debugf("ShowContextMenu(%d items) at %d,%d", len(resolved), x, y)
+	debug.Logf("ShowContextMenu(%d items) at %d,%d", len(resolved), x, y)
 	application.InvokeSync(func() {
 		menu := application.NewContextMenu(contextMenuName)
-		menu.Menu = buildMenu(resolved, s.menuAction)
+		menu.Menu = buildMenu(resolved, onAction)
 		menu.Update()
 	})
 	window.OpenContextMenu(&application.ContextMenuData{Id: contextMenuName, X: x, Y: y})
 	return nil
-}
-
-// menuAction reports a chosen item to the frontend.
-func (s *Service) menuAction(id string) {
-	debugf("menu action %q", id)
-	if s.emitAction != nil {
-		s.emitAction(id)
-	}
 }

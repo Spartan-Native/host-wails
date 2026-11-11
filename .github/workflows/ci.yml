@@ -1,4 +1,4 @@
-# Tests both halves of the adapter: the Go module (repository root) and the npm package (npm/).
+# Tests both halves of the adapter: the Go module (repository root) and the npm workspace (npm/).
 # Also called by release.yml before anything is published.
 
 name: CI
@@ -28,14 +28,14 @@ jobs:
         run: go test ./...
 
       - name: Vet (darwin, windows, linux)
-        run: |
-          go vet ./...
-          GOOS=windows go vet ./...
-          GOOS=linux go vet -tags purego ./...
+        run: make vet
 
   npm:
     name: npm package
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: npm
     permissions:
       contents: read
       # Installs @spartan-native/theme and @spartan-native/host-conformance from GitHub Packages.
@@ -45,8 +45,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: npm/.nvmrc
           cache: npm
+          cache-dependency-path: npm/package-lock.json
           registry-url: https://npm.pkg.github.com
           scope: '@spartan-native'
 

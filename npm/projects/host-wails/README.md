@@ -58,18 +58,19 @@ Changes are detected by Wails' `common:ThemeChanged` event and a 1-second poll f
 
 ## Layout
 
-This package is the `npm/` folder of the host-wails repository. The Go module is the repository root.
+This package lives in `npm/projects/host-wails/` of the host-wails repository. The Go module is the repository root.
 
 | Path | What it is |
 | --- | --- |
-| `npm/src/lib/wails-host.ts` | `wailsHost()`, `isWails()`; the Wails runtime is imported lazily (or injected for tests) |
-| `*.go` (root) | Go module `github.com/spartan-native/host-wails`: `service.go`, `menus.go`, `dialogs.go`, one `appearance_<os>.go` per OS, tests |
+| `npm/projects/host-wails/src/lib/wails-host.ts` | `wailsHost()`, `isWails()`; the Wails runtime is imported lazily (or injected for tests) |
+| `*.go` (root) | Go package `spartannative`: the Wails-bound `Service` and the public types |
+| `internal/` | `contract` (shared JSON types), `appearance` (one `reader_<os>.go` per OS, skin table, change watcher), `menus`, `dialogs`, `debug` |
 
 ## Tests
 
 ```bash
-npm test                                   # conformance suite + adapter tests (fake Wails runtime)
-go test ./...                              # change detection, skin table, JSON shape, menus, dialogs
-SN_LIVE=1 go test -run TestLiveRead -v ./...   # print what this machine reports
-npm run vet:go                             # go vet for darwin, windows and linux
+cd npm && npm test     # conformance suite + adapter tests (fake Wails runtime)
+make test              # Go: change detection, skin table, JSON shape, menus, dialogs
+make live              # print what this machine reports
+make vet               # go vet for darwin, windows and linux
 ```

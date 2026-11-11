@@ -1,6 +1,6 @@
 //go:build windows
 
-package spartannative
+package appearance
 
 import (
 	"fmt"
@@ -18,9 +18,9 @@ const (
 	keyDWM         = `Software\Microsoft\Windows\DWM`
 	keyAccess      = `Software\Microsoft\Accessibility`
 
-	spiGetHighContrast       = 0x0042
+	spiGetHighContrast        = 0x0042
 	spiGetClientAreaAnimation = 0x1042
-	hcfHighContrastOn        = 0x00000001
+	hcfHighContrastOn         = 0x00000001
 )
 
 var procSystemParametersInfo = windows.NewLazySystemDLL("user32.dll").NewProc("SystemParametersInfoW")
@@ -33,19 +33,19 @@ type highContrast struct {
 
 type windowsReader struct{}
 
-func newReader() reader { return windowsReader{} }
+func New() Reader { return windowsReader{} }
 
-func (windowsReader) platform() PlatformInfo {
+func (windowsReader) Platform() Platform {
 	v := windows.RtlGetVersion()
 	version := fmt.Sprintf("%d.%d.%d", v.MajorVersion, v.MinorVersion, v.BuildNumber)
 	build := int(v.BuildNumber)
-	return PlatformInfo{
+	return Platform{
 		OS: "windows", Version: &version, Build: &build,
 		Skin: resolveSkin("windows", &version, &build, nil), Confidence: "exact",
 	}
 }
 
-func (windowsReader) appearance(skin string) AppearanceState {
+func (windowsReader) Appearance(skin string) Appearance {
 	scheme := "light"
 	if v, ok := readDWORD(keyPersonalize, "AppsUseLightTheme"); ok && v == 0 {
 		scheme = "dark"
@@ -69,7 +69,7 @@ func (windowsReader) appearance(skin string) AppearanceState {
 		animations = 1
 	}
 
-	return AppearanceState{
+	return Appearance{
 		Skin:               skin,
 		Accent:             windowsAccent(skin),
 		Scheme:             scheme,
@@ -80,7 +80,7 @@ func (windowsReader) appearance(skin string) AppearanceState {
 	}
 }
 
-func (windowsReader) capabilities() map[string]CapabilityLevel {
+func (windowsReader) Capabilities() map[string]CapabilityLevel {
 	// nativeMenus is partial: context menus are native, but a frameless window (custom title
 	// bar) doesn't show the window menu bar, so desktop-ui draws the menubar in the page.
 	return map[string]CapabilityLevel{

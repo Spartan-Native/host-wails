@@ -5,22 +5,22 @@
     "packageManager": "npm",
     "analytics": false
   },
-  "newProjectRoot": "npm",
+  "newProjectRoot": "projects",
   "projects": {
     "host-wails": {
       "projectType": "library",
-      "root": "npm",
-      "sourceRoot": "npm/src",
+      "root": "projects/host-wails",
+      "sourceRoot": "projects/host-wails/src",
       "prefix": "sn",
       "architect": {
         "build": {
           "builder": "@angular/build:ng-packagr",
           "configurations": {
             "production": {
-              "tsConfig": "npm/tsconfig.lib.prod.json"
+              "tsConfig": "projects/host-wails/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "npm/tsconfig.lib.json"
+              "tsConfig": "projects/host-wails/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -28,7 +28,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "tsConfig": "npm/tsconfig.spec.json"
+            "tsConfig": "projects/host-wails/tsconfig.spec.json"
           }
         }
       }

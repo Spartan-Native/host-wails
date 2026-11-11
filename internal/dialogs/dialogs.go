@@ -1,65 +1,26 @@
-package spartannative
+// Package dialogs shows the OS's own file dialogs and alerts, attached to the current window.
+package dialogs
 
 import (
 	"context"
 	"path/filepath"
 	"strings"
 
+	"github.com/spartan-native/host-wails/internal/contract"
+	"github.com/spartan-native/host-wails/internal/debug"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// FileFilter mirrors FileFilter in @spartan-native/theme.
-type FileFilter struct {
-	Name       string   `json:"name"`
-	Extensions []string `json:"extensions"` // without the dot; "*" matches every file
-}
-
-// OpenFileOptions mirrors OpenFileOptions in @spartan-native/theme.
-type OpenFileOptions struct {
-	Title       string       `json:"title,omitempty"`
-	ButtonLabel string       `json:"buttonLabel,omitempty"`
-	Directory   string       `json:"directory,omitempty"`
-	Filters     []FileFilter `json:"filters,omitempty"`
-	Multiple    bool         `json:"multiple,omitempty"`
-}
-
-// SaveFileOptions mirrors SaveFileOptions in @spartan-native/theme.
-type SaveFileOptions struct {
-	Title       string       `json:"title,omitempty"`
-	ButtonLabel string       `json:"buttonLabel,omitempty"`
-	Directory   string       `json:"directory,omitempty"`
-	Filters     []FileFilter `json:"filters,omitempty"`
-	FileName    string       `json:"fileName,omitempty"`
-}
-
-// PickFolderOptions mirrors PickFolderOptions in @spartan-native/theme.
-type PickFolderOptions struct {
-	Title       string `json:"title,omitempty"`
-	ButtonLabel string `json:"buttonLabel,omitempty"`
-	Directory   string `json:"directory,omitempty"`
-}
-
-// PickedFile mirrors PickedFile in @spartan-native/theme (native hosts always set Path).
-type PickedFile struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-}
-
-// MessageButton is one button of an alert.
-type MessageButton struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-}
-
-// MessageOptions mirrors MessageOptions in @spartan-native/theme.
-type MessageOptions struct {
-	Kind      string          `json:"kind,omitempty"` // info | question | warning | error
-	Title     string          `json:"title,omitempty"`
-	Message   string          `json:"message"`
-	Buttons   []MessageButton `json:"buttons,omitempty"`
-	DefaultID string          `json:"defaultId,omitempty"`
-	CancelID  string          `json:"cancelId,omitempty"`
-}
+// Short names for the contract's dialog types.
+type (
+	FileFilter        = contract.FileFilter
+	OpenFileOptions   = contract.OpenFileOptions
+	SaveFileOptions   = contract.SaveFileOptions
+	PickFolderOptions = contract.PickFolderOptions
+	PickedFile        = contract.PickedFile
+	MessageButton     = contract.MessageButton
+	MessageOptions    = contract.MessageOptions
+)
 
 // filterPattern turns ["png", ".jpg"] into Wails' "*.png;*.jpg". "*" anywhere means every file.
 func filterPattern(extensions []string) string {
@@ -119,7 +80,7 @@ func currentWindow(app *application.App) application.Window {
 	return nil
 }
 
-func (s *Service) openDialog(app *application.App, title, button, directory string, filters []FileFilter) *application.OpenFileDialogStruct {
+func openDialog(app *application.App, title, button, directory string, filters []FileFilter) *application.OpenFileDialogStruct {
 	d := app.Dialog.OpenFile().CanCreateDirectories(true)
 	if title != "" {
 		d.SetTitle(title)
@@ -141,16 +102,10 @@ func (s *Service) openDialog(app *application.App, title, button, directory stri
 	return d
 }
 
-// --- Bound methods (called from @spartan-native/host-wails) -------------------
-
 // OpenFile shows the OS's open dialog. A cancelled dialog returns no files.
-func (s *Service) OpenFile(o OpenFileOptions) ([]PickedFile, error) {
-	app := application.Get()
-	if app == nil {
-		return nil, errNoApp
-	}
-	debugf("OpenFile(%+v)", o)
-	d := s.openDialog(app, o.Title, o.ButtonLabel, o.Directory, o.Filters).CanChooseFiles(true)
+func OpenFile(app *application.App, o OpenFileOptions) ([]PickedFile, error) {
+	debug.Logf("OpenFile(%+v)", o)
+	d := openDialog(app, o.Title, o.ButtonLabel, o.Directory, o.Filters).CanChooseFiles(true)
 	if o.Multiple {
 		paths, err := d.PromptForMultipleSelection()
 		return pickedFiles(paths...), err
@@ -160,12 +115,8 @@ func (s *Service) OpenFile(o OpenFileOptions) ([]PickedFile, error) {
 }
 
 // SaveFile shows the OS's save dialog. A cancelled dialog returns nil.
-func (s *Service) SaveFile(o SaveFileOptions) (*PickedFile, error) {
-	app := application.Get()
-	if app == nil {
-		return nil, errNoApp
-	}
-	debugf("SaveFile(%+v)", o)
+func SaveFile(app *application.App, o SaveFileOptions) (*PickedFile, error) {
+	debug.Logf("SaveFile(%+v)", o)
 	d := app.Dialog.SaveFile().CanCreateDirectories(true)
 	if o.Title != "" {
 		d.SetMessage(o.Title) // the save panel has no title; macOS shows the message instead
@@ -192,13 +143,9 @@ func (s *Service) SaveFile(o SaveFileOptions) (*PickedFile, error) {
 }
 
 // PickFolder shows the OS's folder dialog. A cancelled dialog returns nil.
-func (s *Service) PickFolder(o PickFolderOptions) (*PickedFile, error) {
-	app := application.Get()
-	if app == nil {
-		return nil, errNoApp
-	}
-	debugf("PickFolder(%+v)", o)
-	path, err := s.openDialog(app, o.Title, o.ButtonLabel, o.Directory, nil).
+func PickFolder(app *application.App, o PickFolderOptions) (*PickedFile, error) {
+	debug.Logf("PickFolder(%+v)", o)
+	path, err := openDialog(app, o.Title, o.ButtonLabel, o.Directory, nil).
 		CanChooseFiles(false).
 		CanChooseDirectories(true).
 		PromptForSingleSelection()
@@ -207,13 +154,9 @@ func (s *Service) PickFolder(o PickFolderOptions) (*PickedFile, error) {
 
 // Message shows the OS's alert and returns the id of the pressed button. If the alert is
 // closed without one (GTK lets the user do that), the call ends when the frontend cancels it.
-func (s *Service) Message(ctx context.Context, o MessageOptions) (*string, error) {
-	app := application.Get()
-	if app == nil {
-		return nil, errNoApp
-	}
+func Message(ctx context.Context, app *application.App, o MessageOptions) (*string, error) {
 	o = messageButtons(o)
-	debugf("Message(%+v)", o)
+	debug.Logf("Message(%+v)", o)
 
 	var d *application.MessageDialog
 	switch o.Kind {

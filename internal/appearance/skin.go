@@ -1,4 +1,4 @@
-package spartannative
+package appearance
 
 import (
 	"fmt"

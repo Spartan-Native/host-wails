@@ -1,4 +1,4 @@
-package spartannative
+package dialogs
 
 import (
 	"encoding/json"

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Prepares dist/host-wails for a release. Used by .github/workflows/release.yml after
-// `npm run build`, so npm/package.json keeps its 0.0.0 placeholder version.
+// Prepares npm/dist/host-wails for a release. Used by .github/workflows/release.yml after
+// `npm run build`, so projects/host-wails/package.json keeps its 0.0.0 placeholder version.
 //
 // It sets "version" to the release version, points publishConfig at the GitHub Packages
 // npm registry, and adds "repository", which links the package to this repo (and its
 // visibility) on GitHub. Peer dependency ranges (@spartan-native/theme) are left as written.
 //
-// Usage: node scripts/stamp-release.mjs <version> [<owner>/<repo>]
+// Usage (from npm/): node scripts/stamp-release.mjs <version> [<owner>/<repo>]
 //   version:    v1.2.3, v1.2.3-beta or v1.2.3-beta.4 (the same tag the Go module uses)
 //   owner/repo: defaults to $GITHUB_REPOSITORY
 
@@ -40,7 +40,7 @@ if (!existsSync(file)) {
 
 const pkg = JSON.parse(readFileSync(file, 'utf8'));
 pkg.version = version;
-pkg.repository = { type: 'git', url: `git+https://github.com/${repo}.git`, directory: 'npm' };
+pkg.repository = { type: 'git', url: `git+https://github.com/${repo}.git`, directory: 'npm/projects/host-wails' };
 pkg.publishConfig = { ...pkg.publishConfig, registry: 'https://npm.pkg.github.com' };
 
 writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`);

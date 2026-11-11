@@ -1,20 +1,37 @@
 {
-  "name": "@spartan-native/host-wails",
+  "name": "host-wails-workspace",
   "version": "0.0.0",
-  "description": "NativeHost for Go + Wails v3: the real OS accent, light/dark, contrast, transparency, motion, text size and window focus, live; window minimize/maximize/close. Pairs with the Go module github.com/spartan-native/host-wails.",
-  "keywords": [
-    "spartan-native",
-    "native-host",
-    "wails",
-    "go",
-    "desktop"
-  ],
-  "peerDependencies": {
+  "private": true,
+  "description": "Build workspace for the npm package @spartan-native/host-wails (projects/host-wails). The Go module is the repository root.",
+  "scripts": {
+    "build": "ng build host-wails",
+    "test": "ng test host-wails --watch=false",
+    "stamp-release": "node scripts/stamp-release.mjs"
+  },
+  "packageManager": "npm@11.20.0",
+  "engines": {
+    "node": "^24.15.0 || >=26.0.0",
+    "npm": ">=11.0.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.6",
+    "@angular/cdk": "^22.2.0",
+    "@angular/cli": "^22.2.6",
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/compiler-cli": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "@spartan-native/host-conformance": "^0.1.0",
     "@spartan-native/theme": "^0.1.0",
-    "@wailsio/runtime": "^3.1.0"
-  },
-  "dependencies": {
-    "tslib": "^2.3.0"
-  },
-  "sideEffects": false
+    "@spartan-ng/brain": "^1.9.0",
+    "@wailsio/runtime": "^3.1.0",
+    "jsdom": "^30.0.0",
+    "ng-packagr": "^22.2.6",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.0"
+  }
 }
