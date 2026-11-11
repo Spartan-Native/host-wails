@@ -11,6 +11,8 @@ import {
 export const DEFAULT_SERVICE = 'github.com/spartan-native/host-wails/native.Service';
 /** The event the Go service emits on every appearance change. */
 export const APPEARANCE_EVENT = 'spartan-native:appearance';
+/** The event the Go service emits with an item's id when a native menu item is chosen. */
+export const MENU_ACTION_EVENT = 'spartan-native:menu-action';
 
 /** The parts of @wailsio/runtime this adapter uses. Inject a fake in tests. */
 export interface WailsRuntimeLike {
@@ -49,7 +51,9 @@ const INITIAL: Partial<HostCapabilities> = {
 /**
  * NativeHost for Go + Wails v3. Reads the real OS settings through the Go service
  * (github.com/spartan-native/host-wails/native), live, and owns the window:
- * desktop-ui's window controls minimize, maximize and close it.
+ * desktop-ui's window controls minimize, maximize and close it. Native menus too:
+ * desktop-ui's menubar becomes the macOS global menu bar, and its context menus are
+ * the OS's own.
  *
  * ```go
  * // main.go
@@ -69,7 +73,8 @@ export function wailsHost(options: WailsHostOptions = {}): NativeHost {
     : (import('@wailsio/runtime') as Promise<unknown> as Promise<WailsRuntimeLike>).then((rt) => (loaded = rt));
   const runtime = () => runtimePromise;
 
-  const call = async <T>(method: string): Promise<T> => (await runtime()).Call.ByName(`${service}.${method}`) as Promise<T>;
+  const call = async <T>(method: string, ...args: unknown[]): Promise<T> =>
+    (await runtime()).Call.ByName(`${service}.${method}`, ...args) as Promise<T>;
 
   // Starts with the matrix values; replaced in place once the OS reports its own.
   const capabilities = Object.fromEntries(CAPABILITIES.map((c) => [c, INITIAL[c] ?? 'none'])) as HostCapabilities;
@@ -113,6 +118,11 @@ export function wailsHost(options: WailsHostOptions = {}): NativeHost {
         const offs = [on('common:WindowMaximise', () => cb(true)), on('common:WindowUnMaximise', () => cb(false))];
         return () => offs.forEach((off) => off());
       },
+    },
+    menus: {
+      setApplicationMenu: (menu) => call<void>('SetApplicationMenu', menu),
+      showContextMenu: (menu, { x, y }) => call<void>('ShowContextMenu', menu, Math.round(x), Math.round(y)),
+      onAction: (cb) => on(MENU_ACTION_EVENT, (id) => cb(String(id))),
     },
   };
 }

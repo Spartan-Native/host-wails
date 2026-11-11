@@ -15,11 +15,14 @@ function fakeWails(initial: Partial<AppearanceState> = {}) {
   const listeners = new Map<string, Set<(e: { data: unknown }) => void>>();
   const emit = (name: string, data?: unknown) => listeners.get(name)?.forEach((cb) => cb({ data }));
   const calls: string[] = [];
+  const args: Record<string, unknown[]> = {};
 
   const runtime: WailsRuntimeLike = {
     Call: {
-      async ByName(name: string) {
+      async ByName(name: string, ...rest: unknown[]) {
         calls.push(name);
+        args[name] = rest;
+        if (name === `${DEFAULT_SERVICE}.SetApplicationMenu` || name === `${DEFAULT_SERVICE}.ShowContextMenu`) return undefined;
         if (name === `${DEFAULT_SERVICE}.Platform`) return platform;
         if (name === `${DEFAULT_SERVICE}.Appearance`) return appearance;
         if (name === `${DEFAULT_SERVICE}.Capabilities`) return { textScale: 'native', taskbarProgress: 'none' };
@@ -50,7 +53,7 @@ function fakeWails(initial: Partial<AppearanceState> = {}) {
       emit(focused ? 'common:WindowFocus' : 'common:WindowLostFocus');
     },
   };
-  return { runtime, driver, calls, emit };
+  return { runtime, driver, calls, args, emit };
 }
 
 const tick = () => new Promise((r) => setTimeout(r));
@@ -98,5 +101,24 @@ describe('wailsHost', () => {
     expect(isWails({ protocol: 'wails:', hostname: 'localhost' })).toBe(true);
     expect(isWails({ protocol: 'http:', hostname: 'wails.localhost' })).toBe(true);
     expect(isWails({ protocol: 'http:', hostname: 'localhost' })).toBe(false);
+  });
+
+  it('shows native menus through the Go service and reports chosen items', async () => {
+    const { runtime, args, emit } = fakeWails();
+    const host = wailsHost({ runtime });
+    const menu = [{ label: 'File', submenu: [{ id: 'new', label: 'New', accelerator: 'mod+n' }] }];
+
+    await host.menus!.setApplicationMenu!(menu);
+    expect(args[`${DEFAULT_SERVICE}.SetApplicationMenu`]).toEqual([menu]);
+    await host.menus!.showContextMenu!(menu, { x: 10.6, y: 20.2 });
+    expect(args[`${DEFAULT_SERVICE}.ShowContextMenu`]).toEqual([menu, 11, 20]);
+
+    const chosen: string[] = [];
+    const off = host.menus!.onAction((id) => chosen.push(id));
+    await tick();
+    emit('spartan-native:menu-action', 'new');
+    off();
+    emit('spartan-native:menu-action', 'ignored');
+    expect(chosen).toEqual(['new']);
   });
 });

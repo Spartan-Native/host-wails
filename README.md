@@ -42,6 +42,8 @@ Changes are detected by Wails' `common:ThemeChanged` event and a 1-second poll f
 
 **Window:** focus from `common:WindowFocus` / `WindowLostFocus`; `minimize`, `toggleMaximize`, `close`, `isMaximized` and the maximized state from the Wails window API.
 
+**Menus:** `SetApplicationMenu(items)` and `ShowContextMenu(items, x, y)` build Wails menus from the contract's `MenuItem` data (labels, checkbox and radio items, submenus, `enabled`, accelerators in the portable `mod+shift+s` notation, and roles such as `appMenu`, `editMenu`, `quit`). Roles the OS doesn't have are dropped (the app menu outside macOS). A chosen item comes back as the `spartan-native:menu-action` event with its id, which `menus.onAction` delivers. desktop-ui's `<sn-menubar>` uses this for the macOS global menu bar, and `[snContextMenu]` for OS context menus. `nativeMenus` is `native` on macOS and `partial` on Windows and Linux: context menus are native there, but Wails 3.1 gives the application menu only to windows created after it is set, and frameless windows don't show it.
+
 **Options:** `spartannative.New(spartannative.WithSkin("gtk"), spartannative.WithPollInterval(500*time.Millisecond))`. Set `SPARTAN_NATIVE_DEBUG=1` to log every call and change.
 
 ## Layout
@@ -49,13 +51,13 @@ Changes are detected by Wails' `common:ThemeChanged` event and a 1-second poll f
 | Path | What it is |
 | --- | --- |
 | `src/lib/wails-host.ts` | `wailsHost()`, `isWails()`; the Wails runtime is imported lazily (or injected for tests) |
-| `native/` | Go module `github.com/spartan-native/host-wails/native`: `service.go`, one `appearance_<os>.go` per OS, tests |
+| `native/` | Go module `github.com/spartan-native/host-wails/native`: `service.go`, `menus.go`, one `appearance_<os>.go` per OS, tests |
 
 ## Tests
 
 ```bash
 npx ng test host-wails                                   # conformance suite + adapter tests (fake Wails runtime)
-cd packages/hosts/host-wails/native && go test ./...     # change detection, skin table, JSON shape
+cd packages/hosts/host-wails/native && go test ./...     # change detection, skin table, JSON shape, menus
 SN_LIVE=1 go test -run TestLiveRead -v ./...             # print what this machine reports
 GOOS=windows go vet ./... ; GOOS=linux go vet -tags purego ./...
 ```

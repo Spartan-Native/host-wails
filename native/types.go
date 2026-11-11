@@ -11,7 +11,8 @@
 // The frontend calls Platform(), Appearance() and Capabilities() through the
 // Wails bindings, and receives the "spartan-native:appearance" event whenever
 // the OS appearance changes (accent, light/dark, contrast, transparency,
-// motion, text size).
+// motion, text size). SetApplicationMenu() and ShowContextMenu() show native
+// menus; a chosen item comes back as the "spartan-native:menu-action" event.
 package spartannative
 
 // EventAppearance is emitted with an AppearanceState whenever a value changes.

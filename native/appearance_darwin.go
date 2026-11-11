@@ -89,7 +89,7 @@ func (darwinReader) capabilities() map[string]CapabilityLevel {
 	return map[string]CapabilityLevel{
 		"systemAccent": Native, "colorScheme": Native, "highContrast": Native, "reduceTransparency": Native,
 		"textScale": None, "windowFocus": Native, "windowMaterial": Native, "customTitleBar": Native,
-		"nativeMenus": Partial, "notifications": Partial, "taskbarProgress": None, "fileDialogs": Native,
+		"nativeMenus": Native, "notifications": Partial, "taskbarProgress": None, "fileDialogs": Native,
 		"osVersion": Native, "linuxDesktop": None,
 	}
 }

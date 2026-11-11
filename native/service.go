@@ -17,6 +17,7 @@ type Service struct {
 	pollInterval time.Duration
 	skinOverride string
 	emit         func(state AppearanceState)
+	emitAction   func(id string)
 
 	mu       sync.Mutex
 	platform *PlatformInfo
@@ -92,6 +93,9 @@ func (s *Service) ServiceStartup(ctx context.Context, _ application.ServiceOptio
 	app := application.Get()
 	if s.emit == nil && app != nil {
 		s.emit = func(state AppearanceState) { app.Event.Emit(EventAppearance, state) }
+	}
+	if s.emitAction == nil && app != nil {
+		s.emitAction = func(id string) { app.Event.Emit(EventMenuAction, id) }
 	}
 	if app != nil {
 		// The OS tells Wails about light/dark changes; check everything then.
