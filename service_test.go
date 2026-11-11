@@ -89,3 +89,25 @@ func TestLiveRead(t *testing.T) {
 	t.Logf("platform: %s", p)
 	t.Logf("appearance: %s", a)
 }
+
+func TestZeroPollIntervalTurnsPollingOff(t *testing.T) {
+	r := &fakeReader{state: AppearanceState{Accent: "#007aff", Scheme: "light", Contrast: "normal", TextScale: 1}}
+	emitted := make(chan AppearanceState, 8)
+	s := New(WithPollInterval(0)) // must not panic
+	s.reader = r
+	s.emit = func(a AppearanceState) { emitted <- a }
+	s.Appearance()
+	s.watcher.Start() // no ticker
+	defer s.watcher.Stop()
+
+	r.set(func(a *AppearanceState) { a.Scheme = "dark" })
+	select {
+	case a := <-emitted:
+		t.Fatalf("polled with polling off: %+v", a)
+	case <-time.After(50 * time.Millisecond):
+	}
+	s.watcher.Check() // what a ThemeChanged event does
+	if a := <-emitted; a.Scheme != "dark" {
+		t.Fatalf("Check did not report the change: %+v", a)
+	}
+}

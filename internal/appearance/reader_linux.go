@@ -4,9 +4,11 @@ package appearance
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -21,11 +23,18 @@ const (
 	portalSetting = "org.freedesktop.portal.Settings"
 	nsAppearance  = "org.freedesktop.appearance"
 	nsGnome       = "org.gnome.desktop.interface"
+
+	// readTimeout bounds one Appearance() read, all settings together, so a hung portal
+	// can't block the frontend's call for D-Bus' default 25 seconds.
+	readTimeout = 2 * time.Second
+	// reconnectEvery limits how often a missing session bus is retried.
+	reconnectEvery = 5 * time.Second
 )
 
 type linuxReader struct {
-	once sync.Once
-	conn *dbus.Conn
+	mu          sync.Mutex
+	conn        *dbus.Conn
+	lastAttempt time.Time
 }
 
 func New() Reader { return &linuxReader{} }
@@ -45,12 +54,20 @@ func (r *linuxReader) Platform() Platform {
 func (r *linuxReader) Appearance(skin string) Appearance {
 	state := Appearance{Skin: skin, Accent: stockAccent(skin), Scheme: "light", Contrast: "normal", TextScale: 1}
 
-	if v, ok := r.read(nsAppearance, "color-scheme"); ok {
+	conn := r.connection()
+	if conn == nil {
+		return state
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), readTimeout)
+	defer cancel()
+	read := func(namespace, key string) (interface{}, bool) { return readSetting(ctx, conn, namespace, key) }
+
+	if v, ok := read(nsAppearance, "color-scheme"); ok {
 		if n, ok := v.(uint32); ok && n == 1 { // 1 = prefer dark
 			state.Scheme = "dark"
 		}
 	}
-	if v, ok := r.read(nsAppearance, "accent-color"); ok {
+	if v, ok := read(nsAppearance, "accent-color"); ok {
 		// (ddd) in sRGB 0–1; out-of-range values mean "no accent set"
 		if rgb, ok := v.([]interface{}); ok && len(rgb) == 3 {
 			c := make([]float64, 3)
@@ -65,17 +82,17 @@ func (r *linuxReader) Appearance(skin string) Appearance {
 			}
 		}
 	}
-	if v, ok := r.read(nsAppearance, "contrast"); ok {
+	if v, ok := read(nsAppearance, "contrast"); ok {
 		if n, ok := v.(uint32); ok && n == 1 { // 1 = higher contrast
 			state.Contrast = "more"
 		}
 	}
-	if v, ok := r.read(nsAppearance, "reduced-motion"); ok {
+	if v, ok := read(nsAppearance, "reduced-motion"); ok {
 		if n, ok := v.(uint32); ok && n == 1 {
 			state.ReduceMotion = true
 		}
 	}
-	if v, ok := r.read(nsGnome, "text-scaling-factor"); ok {
+	if v, ok := read(nsGnome, "text-scaling-factor"); ok {
 		if f, ok := v.(float64); ok {
 			state.TextScale = roundScale(f)
 		}
@@ -94,18 +111,41 @@ func (r *linuxReader) Capabilities() map[string]CapabilityLevel {
 	}
 }
 
-// read asks the portal for one setting. ReadOne (portal v2) first, then the older Read.
-func (r *linuxReader) read(namespace, key string) (interface{}, bool) {
-	r.once.Do(func() { r.conn, _ = dbus.ConnectSessionBus() })
-	if r.conn == nil {
-		return nil, false
+// connection returns the session bus, connecting again when there is none yet or it was
+// lost (at most every reconnectEvery), so a bus that wasn't ready at startup is picked up.
+func (r *linuxReader) connection() *dbus.Conn {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.conn != nil && r.conn.Connected() {
+		return r.conn
 	}
-	obj := r.conn.Object(portalDest, portalPath)
+	if r.conn != nil {
+		_ = r.conn.Close()
+		r.conn = nil
+	}
+	if !r.lastAttempt.IsZero() && time.Since(r.lastAttempt) < reconnectEvery {
+		return nil
+	}
+	r.lastAttempt = time.Now()
+	conn, err := dbus.ConnectSessionBus()
+	if err != nil {
+		return nil
+	}
+	r.conn = conn
+	return conn
+}
+
+// readSetting asks the portal for one setting. ReadOne (portal v2) first, then the older Read.
+func readSetting(ctx context.Context, conn *dbus.Conn, namespace, key string) (interface{}, bool) {
+	obj := conn.Object(portalDest, portalPath)
 	var v dbus.Variant
-	if err := obj.Call(portalSetting+".ReadOne", 0, namespace, key).Store(&v); err == nil {
+	if err := obj.CallWithContext(ctx, portalSetting+".ReadOne", 0, namespace, key).Store(&v); err == nil {
 		return v.Value(), true
 	}
-	if err := obj.Call(portalSetting+".Read", 0, namespace, key).Store(&v); err == nil {
+	if ctx.Err() != nil {
+		return nil, false
+	}
+	if err := obj.CallWithContext(ctx, portalSetting+".Read", 0, namespace, key).Store(&v); err == nil {
 		if inner, ok := v.Value().(dbus.Variant); ok { // Read wraps the value twice
 			return inner.Value(), true
 		}

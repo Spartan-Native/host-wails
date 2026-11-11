@@ -4,6 +4,7 @@ package menus
 import (
 	"errors"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/spartan-native/host-wails/internal/contract"
@@ -45,10 +46,22 @@ var macOnlyRoles = map[string]bool{"appMenu": true, "hide": true, "hideOthers": 
 // modifiers maps the portable notation to Wails' accelerator modifiers.
 var modifiers = map[string]string{"mod": "cmdorctrl", "ctrl": "ctrl", "alt": "optionoralt", "shift": "shift", "meta": "super"}
 
-// keys Wails knows by name (the portable notation uses the same names).
-var namedKeys = map[string]bool{
-	"backspace": true, "tab": true, "enter": true, "escape": true, "space": true, "delete": true,
-	"up": true, "down": true, "left": true, "right": true, "home": true, "end": true,
+// namedKeys maps the portable notation's key names to the names Wails knows. Most are the
+// same; Wails spells the paging keys with a space.
+var namedKeys = map[string]string{
+	"backspace": "backspace", "tab": "tab", "enter": "enter", "escape": "escape", "space": "space",
+	"delete": "delete", "forwarddelete": "forward delete", "up": "up", "down": "down", "left": "left",
+	"right": "right", "home": "home", "end": "end", "pageup": "page up", "pagedown": "page down",
+	"plus": "plus", "numlock": "numlock",
+}
+
+// functionKey reports whether k is f1 … f35, the function keys Wails knows.
+func functionKey(k string) bool {
+	if len(k) < 2 || k[0] != 'f' || k[1] == '0' {
+		return false
+	}
+	n, err := strconv.Atoi(k[1:])
+	return err == nil && n >= 1 && n <= 35
 }
 
 // toAccelerator turns "mod+shift+s" into Wails' "cmdorctrl+shift+s". ok is false for
@@ -69,8 +82,11 @@ func toAccelerator(shortcut string) (accelerator string, ok bool) {
 			out = append(out, m)
 			continue
 		}
-		isFKey := len(p) >= 2 && p[0] == 'f' && strings.Trim(p[1:], "0123456789") == ""
-		if !(len([]rune(p)) == 1 || namedKeys[p] || isFKey) {
+		switch name, named := namedKeys[p]; {
+		case named:
+			p = name
+		case len([]rune(p)) == 1, functionKey(p):
+		default:
 			return "", false
 		}
 		out = append(out, p)
@@ -152,6 +168,8 @@ func buildItem(item MenuItem, onAction func(id string)) *application.MenuItem {
 	if item.Accelerator != "" && item.Submenu == nil {
 		if acc, ok := toAccelerator(item.Accelerator); ok {
 			mi.SetAccelerator(acc)
+		} else {
+			debug.Logf("menu item %q: accelerator %q not supported, dropped", item.Label, item.Accelerator)
 		}
 	}
 	if item.ID != "" && item.Role == "" && item.Submenu == nil {

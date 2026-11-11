@@ -18,7 +18,8 @@ type Watcher struct {
 }
 
 // NewWatcher creates a watcher. read returns the current appearance; onChange receives
-// it when it differs from the last one seen.
+// it when it differs from the last one seen. An interval of zero or less turns polling
+// off: only Check reports changes then.
 func NewWatcher(interval time.Duration, read func() Appearance, onChange func(Appearance)) *Watcher {
 	return &Watcher{read: read, onChange: onChange, interval: interval}
 }
@@ -44,8 +45,12 @@ func (w *Watcher) Check() {
 	}
 }
 
-// Start begins polling. Calling it again while running does nothing.
+// Start begins polling. Calling it again while running does nothing, and so does a
+// watcher whose interval is zero or less.
 func (w *Watcher) Start() {
+	if w.interval <= 0 {
+		return
+	}
 	w.mu.Lock()
 	if w.stop != nil {
 		w.mu.Unlock()

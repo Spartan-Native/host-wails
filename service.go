@@ -37,7 +37,8 @@ type Service struct {
 type Option func(*Service)
 
 // WithPollInterval sets how often the OS is re-read for changes that have no
-// notification (accent, transparency, text size). Default: 1 second.
+// notification (accent, transparency, text size). Default: 1 second. Zero or less turns
+// polling off; changes are then picked up only when Wails reports a theme change.
 func WithPollInterval(d time.Duration) Option { return func(s *Service) { s.pollInterval = d } }
 
 // WithSkin forces a skin instead of detecting it (e.g. from a user setting).

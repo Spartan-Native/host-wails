@@ -8,13 +8,21 @@ import (
 
 func TestToAccelerator(t *testing.T) {
 	cases := map[string]string{
-		"mod+shift+s": "cmdorctrl+shift+s",
-		"Mod+N":       "cmdorctrl+n",
-		"alt+f4":      "optionoralt+f4",
-		"ctrl+delete": "ctrl+delete",
-		"f2":          "f2",
-		"enter":       "enter",
-		"mod+,":       "cmdorctrl+,",
+		"mod+shift+s":   "cmdorctrl+shift+s",
+		"Mod+N":         "cmdorctrl+n",
+		"alt+f4":        "optionoralt+f4",
+		"ctrl+delete":   "ctrl+delete",
+		"f2":            "f2",
+		"enter":         "enter",
+		"mod+,":         "cmdorctrl+,",
+		"mod+pageup":    "cmdorctrl+page up",
+		"PageDown":      "page down",
+		"mod+plus":      "cmdorctrl+plus",
+		"mod+=":         "cmdorctrl+=",
+		"numlock":       "numlock",
+		"f35":           "f35",
+		"f":             "f",
+		"forwarddelete": "forward delete",
 	}
 	for in, want := range cases {
 		got, ok := toAccelerator(in)
@@ -22,7 +30,7 @@ func TestToAccelerator(t *testing.T) {
 			t.Errorf("toAccelerator(%q) = %q, %v; want %q", in, got, ok, want)
 		}
 	}
-	for _, bad := range []string{"", "hyper+s", "mod+pageup", "mod+"} {
+	for _, bad := range []string{"", "hyper+s", "mod+insert", "mod+", "f0", "f36", "f01", "mod+page up"} {
 		if got, ok := toAccelerator(bad); ok {
 			t.Errorf("toAccelerator(%q) = %q, want rejected", bad, got)
 		}
@@ -119,5 +127,14 @@ func TestBuildMenuReportsChosenItems(t *testing.T) {
 	more := menu.ItemAt(4)
 	if !more.IsSubmenu() || more.GetSubmenu().ItemAt(0).Label() != "Deep" {
 		t.Fatal("More has no Deep submenu")
+	}
+}
+
+func TestWailsAcceptsTheMappedKeys(t *testing.T) {
+	for _, shortcut := range []string{"mod+pageup", "mod+pagedown", "mod+plus", "forwarddelete", "numlock", "f35"} {
+		menu := buildMenu([]MenuItem{{ID: "x", Label: "X", Accelerator: shortcut}}, func(string) {})
+		if menu.ItemAt(0).GetAccelerator() == "" {
+			t.Errorf("Wails rejected %q", shortcut)
+		}
 	}
 }
