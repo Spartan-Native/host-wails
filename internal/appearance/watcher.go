@@ -12,6 +12,10 @@ type Watcher struct {
 	onChange func(Appearance)
 	interval time.Duration
 
+	// checkMu runs one Check at a time, so two overlapping checks can't report an older
+	// reading after a newer one.
+	checkMu sync.Mutex
+
 	mu   sync.Mutex
 	last *Appearance
 	stop chan struct{}
@@ -31,8 +35,11 @@ func (w *Watcher) Seen(state Appearance) {
 	w.mu.Unlock()
 }
 
-// Check re-reads the appearance and reports it if it changed.
+// Check re-reads the appearance and reports it if it changed. Checks run one at a time;
+// onChange is called before the next one starts.
 func (w *Watcher) Check() {
+	w.checkMu.Lock()
+	defer w.checkMu.Unlock()
 	next := w.read()
 	w.mu.Lock()
 	changed := w.last == nil || *w.last != next

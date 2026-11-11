@@ -13,11 +13,16 @@ typedef struct {
 	long major, minor, patch;
 } snAppearance;
 
-static snAppearance snRead(void) {
+static void snReadInto(snAppearance *out) {
 	snAppearance a = {0};
 	@autoreleasepool {
-		// The accent the user picked in System Settings → Appearance, in sRGB
-		NSColor *accent = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+		// The accent the user picked in System Settings → Appearance, in sRGB. Resolved in the
+		// light (Aqua) appearance, so the value doesn't depend on which thread reads it (the
+		// main thread would otherwise give the dark variant in dark mode).
+		__block NSColor *accent = nil;
+		[[NSAppearance appearanceNamed:NSAppearanceNameAqua] performAsCurrentDrawingAppearance:^{
+			accent = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+		}];
 		if (accent) {
 			a.hasAccent = 1;
 			a.r = accent.redComponent;
@@ -37,6 +42,19 @@ static snAppearance snRead(void) {
 		a.major = v.majorVersion;
 		a.minor = v.minorVersion;
 		a.patch = v.patchVersion;
+	}
+	*out = a;
+}
+
+// AppKit isn't thread-safe, and the readers run on goroutines. While the app runs, read on
+// the main thread; without a running app (tests, before startup) there is no main run loop
+// to wait for, so read here.
+static snAppearance snRead(void) {
+	__block snAppearance a = {0};
+	if ([NSThread isMainThread] || NSApp == nil || ![NSApp isRunning]) {
+		snReadInto(&a);
+	} else {
+		dispatch_sync(dispatch_get_main_queue(), ^{ snReadInto(&a); });
 	}
 	return a;
 }
@@ -85,11 +103,12 @@ func (darwinReader) Appearance(skin string) Appearance {
 	}
 }
 
+// Capabilities lists what macOS supports; the rest is None.
 func (darwinReader) Capabilities() map[string]CapabilityLevel {
-	return map[string]CapabilityLevel{
-		"systemAccent": Native, "colorScheme": Native, "highContrast": Native, "reduceTransparency": Native,
-		"textScale": None, "windowFocus": Native, "windowMaterial": Native, "customTitleBar": Native,
-		"nativeMenus": Native, "notifications": Partial, "taskbarProgress": None, "fileDialogs": Native,
-		"osVersion": Native, "linuxDesktop": None,
-	}
+	return capabilities(map[string]CapabilityLevel{
+		"systemAccent": Native, "colorScheme": Native, "highContrast": Native,
+		"reduceTransparency": Native, "windowFocus": Native, "windowMaterial": Native,
+		"customTitleBar": Native, "nativeMenus": Native, "notifications": Partial, "fileDialogs": Native,
+		"osVersion": Native,
+	})
 }

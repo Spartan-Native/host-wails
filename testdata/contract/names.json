@@ -1,0 +1,43 @@
+{
+  "service": "github.com/spartan-native/host-wails.Service",
+  "events": {
+    "appearance": "spartan-native:appearance",
+    "menuAction": "spartan-native:menu-action"
+  },
+  "capabilities": [
+    "systemAccent",
+    "colorScheme",
+    "highContrast",
+    "reduceTransparency",
+    "textScale",
+    "windowFocus",
+    "windowMaterial",
+    "customTitleBar",
+    "nativeMenus",
+    "notifications",
+    "taskbarProgress",
+    "fileDialogs",
+    "osVersion",
+    "linuxDesktop"
+  ],
+  "menuRoles": [
+    "appMenu",
+    "editMenu",
+    "windowMenu",
+    "about",
+    "hide",
+    "hideOthers",
+    "showAll",
+    "quit",
+    "undo",
+    "redo",
+    "cut",
+    "copy",
+    "paste",
+    "selectAll",
+    "minimize",
+    "zoom",
+    "close",
+    "toggleFullscreen"
+  ]
+}

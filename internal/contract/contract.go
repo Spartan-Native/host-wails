@@ -44,6 +44,14 @@ const (
 	None    CapabilityLevel = "none"
 )
 
+// Capabilities lists every capability key, in the order of CAPABILITIES in
+// @spartan-native/theme. Capabilities() reports a level for each of them.
+var Capabilities = []string{
+	"systemAccent", "colorScheme", "highContrast", "reduceTransparency", "textScale", "windowFocus",
+	"windowMaterial", "customTitleBar", "nativeMenus", "notifications", "taskbarProgress", "fileDialogs",
+	"osVersion", "linuxDesktop",
+}
+
 // --- Menus --------------------------------------------------------------------------
 
 // MenuItem mirrors MenuItem in @spartan-native/theme.

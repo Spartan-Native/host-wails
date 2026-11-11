@@ -47,12 +47,12 @@ var macOnlyRoles = map[string]bool{"appMenu": true, "hide": true, "hideOthers": 
 var modifiers = map[string]string{"mod": "cmdorctrl", "ctrl": "ctrl", "alt": "optionoralt", "shift": "shift", "meta": "super"}
 
 // namedKeys maps the portable notation's key names to the names Wails knows. Most are the
-// same; Wails spells the paging keys with a space.
+// same; Wails spells the paging keys with a space. Only keys Wails' menus handle on every OS
+// are listed (its macOS menus don't translate "forward delete" or "numlock").
 var namedKeys = map[string]string{
 	"backspace": "backspace", "tab": "tab", "enter": "enter", "escape": "escape", "space": "space",
-	"delete": "delete", "forwarddelete": "forward delete", "up": "up", "down": "down", "left": "left",
-	"right": "right", "home": "home", "end": "end", "pageup": "page up", "pagedown": "page down",
-	"plus": "plus", "numlock": "numlock",
+	"delete": "delete", "up": "up", "down": "down", "left": "left", "right": "right",
+	"home": "home", "end": "end", "pageup": "page up", "pagedown": "page down", "plus": "plus",
 }
 
 // functionKey reports whether k is f1 … f35, the function keys Wails knows.

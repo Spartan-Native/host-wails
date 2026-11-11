@@ -80,8 +80,9 @@ func (s *Service) ServiceStartup(context.Context, application.ServiceOptions) er
 		if s.emitAction == nil {
 			s.emitAction = func(id string) { a.Event.Emit(EventMenuAction, id) }
 		}
-		// The OS tells Wails about light/dark changes; check everything then.
-		s.offTheme = a.Event.OnApplicationEvent(events.Common.ThemeChanged, func(*application.ApplicationEvent) { s.watcher.Check() })
+		// The OS tells Wails about light/dark changes; check everything then. On a goroutine:
+		// the handler may run on the main thread, which a running check can be waiting for.
+		s.offTheme = a.Event.OnApplicationEvent(events.Common.ThemeChanged, func(*application.ApplicationEvent) { go s.watcher.Check() })
 	}
 	s.watcher.Start()
 	return nil

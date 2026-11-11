@@ -20,6 +20,8 @@ The halves talk through names the compilers can't check. Change both sides in th
 - **Events.** `spartan-native:appearance` and `spartan-native:menu-action` (`EventAppearance`, `EventMenuAction` in Go; `APPEARANCE_EVENT`, `MENU_ACTION_EVENT` in TypeScript).
 - **Data shapes.** The structs in `internal/contract/contract.go` must keep producing the JSON the contract types in `@spartan-native/theme` describe.
 
+`testdata/contract/` holds the service name, event names, capability keys, menu roles and one JSON value of each contract type. `contract_test.go` (and a test in `internal/menus`) checks the Go side against it, and `wails-host.spec.ts` checks the adapter and `@spartan-native/theme` against it. When the contract changes, change the fixture and both sides together. Capability keys live once, in `contract.Capabilities`; the readers list only the keys that aren't `none`.
+
 The fake runtime in `npm/projects/host-wails/src/lib/wails-host.spec.ts` stands in for the Go service. Update it when the Go side changes.
 
 ## Checks
@@ -28,7 +30,7 @@ The fake runtime in `npm/projects/host-wails/src/lib/wails-host.spec.ts` stands 
 | --- | --- |
 | `npm test` (in `npm/`) | Adapter tests and the host-conformance suite |
 | `npm run build` (in `npm/`) | Checking that the npm package compiles |
-| `make test` | Go tests |
+| `make test` | Go tests, with the race detector (CI also runs them on Linux with `-tags purego`, and on Windows) |
 | `make vet` | Vetting the Windows and Linux code from any OS |
 
 ## Docs

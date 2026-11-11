@@ -3,8 +3,8 @@
 
 .PHONY: test vet live tidy
 
-test: ## Run the Go tests
-	go test ./...
+test: ## Run the Go tests (with the race detector)
+	go test -race ./...
 
 vet: ## Vet the darwin, windows and linux code from any OS
 	go vet ./...

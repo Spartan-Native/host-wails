@@ -17,11 +17,5 @@ func (otherReader) Appearance(skin string) Appearance {
 }
 
 func (otherReader) Capabilities() map[string]CapabilityLevel {
-	caps := map[string]CapabilityLevel{}
-	for _, c := range []string{"systemAccent", "colorScheme", "highContrast", "reduceTransparency", "textScale", "windowFocus",
-		"windowMaterial", "customTitleBar", "nativeMenus", "notifications", "taskbarProgress", "fileDialogs", "osVersion", "linuxDesktop"} {
-		caps[c] = None
-	}
-	caps["windowFocus"] = Native
-	return caps
+	return capabilities(map[string]CapabilityLevel{"windowFocus": Native})
 }

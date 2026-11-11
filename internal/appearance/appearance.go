@@ -26,5 +26,21 @@ type Reader interface {
 	Capabilities() map[string]CapabilityLevel
 }
 
+// capabilities returns a level for every key in contract.Capabilities: the given ones, and
+// None for the rest. It panics on a key the contract doesn't have, so a typo fails the tests.
+func capabilities(levels map[string]CapabilityLevel) map[string]CapabilityLevel {
+	out := make(map[string]CapabilityLevel, len(contract.Capabilities))
+	for _, c := range contract.Capabilities {
+		out[c] = None
+	}
+	for c, level := range levels {
+		if _, known := out[c]; !known {
+			panic("appearance: unknown capability " + c)
+		}
+		out[c] = level
+	}
+	return out
+}
+
 func strPtr(s string) *string { return &s }
 func intPtr(i int) *int       { return &i }

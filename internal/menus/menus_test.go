@@ -2,27 +2,27 @@ package menus
 
 import (
 	"encoding/json"
+	"os"
 	"reflect"
+	"slices"
 	"testing"
 )
 
 func TestToAccelerator(t *testing.T) {
 	cases := map[string]string{
-		"mod+shift+s":   "cmdorctrl+shift+s",
-		"Mod+N":         "cmdorctrl+n",
-		"alt+f4":        "optionoralt+f4",
-		"ctrl+delete":   "ctrl+delete",
-		"f2":            "f2",
-		"enter":         "enter",
-		"mod+,":         "cmdorctrl+,",
-		"mod+pageup":    "cmdorctrl+page up",
-		"PageDown":      "page down",
-		"mod+plus":      "cmdorctrl+plus",
-		"mod+=":         "cmdorctrl+=",
-		"numlock":       "numlock",
-		"f35":           "f35",
-		"f":             "f",
-		"forwarddelete": "forward delete",
+		"mod+shift+s": "cmdorctrl+shift+s",
+		"Mod+N":       "cmdorctrl+n",
+		"alt+f4":      "optionoralt+f4",
+		"ctrl+delete": "ctrl+delete",
+		"f2":          "f2",
+		"enter":       "enter",
+		"mod+,":       "cmdorctrl+,",
+		"mod+pageup":  "cmdorctrl+page up",
+		"PageDown":    "page down",
+		"mod+plus":    "cmdorctrl+plus",
+		"mod+=":       "cmdorctrl+=",
+		"f35":         "f35",
+		"f":           "f",
 	}
 	for in, want := range cases {
 		got, ok := toAccelerator(in)
@@ -30,7 +30,7 @@ func TestToAccelerator(t *testing.T) {
 			t.Errorf("toAccelerator(%q) = %q, %v; want %q", in, got, ok, want)
 		}
 	}
-	for _, bad := range []string{"", "hyper+s", "mod+insert", "mod+", "f0", "f36", "f01", "mod+page up"} {
+	for _, bad := range []string{"", "hyper+s", "mod+insert", "mod+", "f0", "f36", "f01", "mod+page up", "forwarddelete", "numlock"} {
 		if got, ok := toAccelerator(bad); ok {
 			t.Errorf("toAccelerator(%q) = %q, want rejected", bad, got)
 		}
@@ -131,10 +131,33 @@ func TestBuildMenuReportsChosenItems(t *testing.T) {
 }
 
 func TestWailsAcceptsTheMappedKeys(t *testing.T) {
-	for _, shortcut := range []string{"mod+pageup", "mod+pagedown", "mod+plus", "forwarddelete", "numlock", "f35"} {
+	for _, shortcut := range []string{"mod+pageup", "mod+pagedown", "mod+plus", "f35"} {
 		menu := buildMenu([]MenuItem{{ID: "x", Label: "X", Accelerator: shortcut}}, func(string) {})
 		if menu.ItemAt(0).GetAccelerator() == "" {
 			t.Errorf("Wails rejected %q", shortcut)
 		}
+	}
+}
+
+func TestRolesMatchTheContractFixture(t *testing.T) {
+	raw, err := os.ReadFile("../../testdata/contract/names.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names struct {
+		MenuRoles []string `json:"menuRoles"`
+	}
+	if err := json.Unmarshal(raw, &names); err != nil {
+		t.Fatal(err)
+	}
+	got := make([]string, 0, len(roles))
+	for r := range roles {
+		got = append(got, r)
+	}
+	want := slices.Clone(names.MenuRoles)
+	slices.Sort(got)
+	slices.Sort(want)
+	if !slices.Equal(got, want) {
+		t.Errorf("roles = %v\nfixture says %v", got, want)
 	}
 }

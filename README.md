@@ -41,8 +41,10 @@ provideSpartanNative({ host: isWails() ? wailsHost() : webHost() });
 ├── service.go                 Service: the Wails-bound methods and lifecycle, wiring the packages below
 ├── types.go                   Public aliases of the contract types and event names
 ├── service_test.go            Service tests (change detection, JSON shape, live read)
+├── contract_test.go           Checks names and JSON against testdata/contract
+├── testdata/contract/         Names and JSON values both halves are tested against
 ├── internal/
-│   ├── contract/              The JSON types shared with @spartan-native/theme, and event names
+│   ├── contract/              The JSON types shared with @spartan-native/theme, event names, capability keys
 │   ├── appearance/            OS readers (one reader_<os>.go per OS), skin table, change watcher
 │   ├── menus/                 Builds native application and context menus from MenuItem data
 │   ├── dialogs/               Native file dialogs and alerts
@@ -106,7 +108,7 @@ npm install
 
 | Command | Where | What it does |
 | --- | --- | --- |
-| `make test` | root | Go tests (change detection, skin table, JSON shape, menus, dialogs) |
+| `make test` | root | Go tests with the race detector (change detection, skin table, contract fixtures, menus, dialogs) |
 | `make vet` | root | `go vet` for darwin, windows and linux, from any OS |
 | `make live` | root | Prints what this machine's OS reports |
 | `npm test` | `npm/` | Adapter tests and the host-conformance suite, against a fake Wails runtime |

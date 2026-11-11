@@ -89,9 +89,14 @@ export function wailsHost(options: WailsHostOptions = {}): NativeHost {
     let cancelled = false;
     if (loaded) off = loaded.Events.On(event, (e) => cb(e.data));
     else
-      void runtime().then((rt) => {
-        if (!cancelled) off = rt.Events.On(event, (e) => cb(e.data));
-      });
+      runtime().then(
+        (rt) => {
+          if (!cancelled) off = rt.Events.On(event, (e) => cb(e.data));
+        },
+        // No runtime, no events. The calls report the failed import; don't add an
+        // unhandled rejection per subscription.
+        () => undefined,
+      );
     return () => {
       cancelled = true;
       off?.();

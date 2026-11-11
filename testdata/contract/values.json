@@ -1,0 +1,61 @@
+{
+  "platformInfo": {
+    "os": "windows",
+    "version": "10.0.26100",
+    "build": 26100,
+    "desktop": null,
+    "skin": "win",
+    "confidence": "exact"
+  },
+  "appearanceState": {
+    "skin": "gtk",
+    "accent": "#3584e4",
+    "scheme": "dark",
+    "contrast": "more",
+    "reduceTransparency": true,
+    "reduceMotion": true,
+    "textScale": 1.25
+  },
+  "menu": [
+    {
+      "label": "File",
+      "submenu": [
+        { "id": "save", "label": "Save", "type": "normal", "accelerator": "mod+s", "enabled": false },
+        { "type": "separator" },
+        { "id": "wrap", "label": "Wrap lines", "type": "checkbox", "checked": true },
+        { "label": "Quit Harbor", "role": "quit" }
+      ]
+    }
+  ],
+  "openFileOptions": {
+    "title": "Open",
+    "buttonLabel": "Import",
+    "directory": "/home/me",
+    "filters": [{ "name": "Images", "extensions": ["png", "jpg"] }],
+    "multiple": true
+  },
+  "saveFileOptions": {
+    "title": "Export",
+    "buttonLabel": "Export",
+    "directory": "/home/me",
+    "filters": [{ "name": "PDF", "extensions": ["pdf"] }],
+    "fileName": "Report.pdf"
+  },
+  "pickFolderOptions": {
+    "title": "Choose a folder",
+    "buttonLabel": "Choose",
+    "directory": "/home/me"
+  },
+  "pickedFile": { "name": "Report.pdf", "path": "/home/me/Report.pdf" },
+  "messageOptions": {
+    "kind": "question",
+    "title": "Unsaved changes",
+    "message": "Save changes?",
+    "buttons": [
+      { "id": "cancel", "label": "Cancel" },
+      { "id": "save", "label": "Save" }
+    ],
+    "defaultId": "save",
+    "cancelId": "cancel"
+  }
+}

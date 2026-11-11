@@ -1,6 +1,20 @@
 import { describeHostConformance, type HostDriver } from '@spartan-native/host-conformance';
-import type { AppearanceState, PlatformInfo } from '@spartan-native/theme';
-import { DEFAULT_SERVICE, isWails, wailsHost, type WailsRuntimeLike } from './wails-host';
+import {
+  type AppearanceState,
+  CAPABILITIES,
+  MENU_ROLES,
+  type MenuItem,
+  type MessageOptions,
+  type OpenFileOptions,
+  type PickedFile,
+  type PickFolderOptions,
+  type PlatformInfo,
+  type SaveFileOptions,
+} from '@spartan-native/theme';
+// Shared with the Go tests (contract_test.go), so both halves are checked against the same files.
+import names from '../../../../../testdata/contract/names.json';
+import values from '../../../../../testdata/contract/values.json';
+import { APPEARANCE_EVENT, DEFAULT_SERVICE, isWails, MENU_ACTION_EVENT, wailsHost, type WailsRuntimeLike } from './wails-host';
 
 /**
  * A fake Wails runtime that behaves like the Go service: bound methods answer by
@@ -139,5 +153,63 @@ describe('wailsHost', () => {
 
     const buttons = [{ id: 'cancel', label: 'Cancel' }, { id: 'save', label: 'Save' }];
     expect(await host.dialogs!.message!({ kind: 'question', message: 'Save changes?', buttons, defaultId: 'save', cancelId: 'cancel' })).toBe('save');
+  });
+});
+
+/**
+ * The contract fixtures in testdata/contract, which the Go tests check too. Each value is
+ * typed here, so the compiler checks it against @spartan-native/theme (an extra field is an
+ * error), and compared with the fixture, which Go decodes strictly and encodes back.
+ */
+describe('contract fixtures', () => {
+  it('names the bound service and events the way the adapter calls them', () => {
+    expect(DEFAULT_SERVICE).toBe(names.service);
+    expect(APPEARANCE_EVENT).toBe(names.events.appearance);
+    expect(MENU_ACTION_EVENT).toBe(names.events.menuAction);
+  });
+
+  it('lists the capabilities and menu roles of @spartan-native/theme', () => {
+    expect(names.capabilities).toEqual([...CAPABILITIES]);
+    expect([...names.menuRoles].sort()).toEqual([...MENU_ROLES].sort());
+  });
+
+  it('holds values of the theme types', () => {
+    const platformInfo: PlatformInfo = {
+      os: 'windows', version: '10.0.26100', build: 26100, desktop: null, skin: 'win', confidence: 'exact',
+    };
+    const appearanceState: AppearanceState = {
+      skin: 'gtk', accent: '#3584e4', scheme: 'dark', contrast: 'more',
+      reduceTransparency: true, reduceMotion: true, textScale: 1.25,
+    };
+    const menu: MenuItem[] = [
+      {
+        label: 'File',
+        submenu: [
+          { id: 'save', label: 'Save', type: 'normal', accelerator: 'mod+s', enabled: false },
+          { type: 'separator' },
+          { id: 'wrap', label: 'Wrap lines', type: 'checkbox', checked: true },
+          { label: 'Quit Harbor', role: 'quit' },
+        ],
+      },
+    ];
+    const openFileOptions: OpenFileOptions = {
+      title: 'Open', buttonLabel: 'Import', directory: '/home/me',
+      filters: [{ name: 'Images', extensions: ['png', 'jpg'] }], multiple: true,
+    };
+    const saveFileOptions: SaveFileOptions = {
+      title: 'Export', buttonLabel: 'Export', directory: '/home/me',
+      filters: [{ name: 'PDF', extensions: ['pdf'] }], fileName: 'Report.pdf',
+    };
+    const pickFolderOptions: PickFolderOptions = { title: 'Choose a folder', buttonLabel: 'Choose', directory: '/home/me' };
+    const pickedFile: PickedFile = { name: 'Report.pdf', path: '/home/me/Report.pdf' };
+    const messageOptions: MessageOptions = {
+      kind: 'question', title: 'Unsaved changes', message: 'Save changes?',
+      buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'save', label: 'Save' }],
+      defaultId: 'save', cancelId: 'cancel',
+    };
+
+    expect({
+      platformInfo, appearanceState, menu, openFileOptions, saveFileOptions, pickFolderOptions, pickedFile, messageOptions,
+    }).toEqual(values);
   });
 });

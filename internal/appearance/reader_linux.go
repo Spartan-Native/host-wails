@@ -103,12 +103,11 @@ func (r *linuxReader) Appearance(skin string) Appearance {
 func (r *linuxReader) Capabilities() map[string]CapabilityLevel {
 	// nativeMenus is partial: context menus are native, but a frameless window (custom title
 	// bar) doesn't show the window menu bar, so desktop-ui draws the menubar in the page.
-	return map[string]CapabilityLevel{
-		"systemAccent": Native, "colorScheme": Native, "highContrast": Native, "reduceTransparency": None,
-		"textScale": Partial, "windowFocus": Native, "windowMaterial": None, "customTitleBar": Native,
-		"nativeMenus": Partial, "notifications": Partial, "taskbarProgress": None, "fileDialogs": Native,
-		"osVersion": Native, "linuxDesktop": Native,
-	}
+	return capabilities(map[string]CapabilityLevel{
+		"systemAccent": Native, "colorScheme": Native, "highContrast": Native, "textScale": Partial,
+		"windowFocus": Native, "customTitleBar": Native, "nativeMenus": Partial,
+		"notifications": Partial, "fileDialogs": Native, "osVersion": Native, "linuxDesktop": Native,
+	})
 }
 
 // connection returns the session bus, connecting again when there is none yet or it was
