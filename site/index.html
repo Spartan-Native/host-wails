@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>host-wails · Spartan Native</title>
+    <meta
+      name="description"
+      content="The Spartan Native host adapter for Go + Wails v3: the real OS accent, light/dark, contrast, transparency, motion, text size and window focus, live, plus native menus and dialogs."
+    />
+    <meta name="theme-color" content="#08090d" />
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/site.css" />
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="nav">
+      <div class="wrap">
+        <a class="logo" href="./"><img src="assets/logo.svg" alt="" width="28" height="28" />host-wails</a>
+        <ul class="nav-links">
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#quick-start">Quick start</a></li>
+          <li><a href="#reads">What it reads</a></li>
+          <li><a href="#capabilities">Capabilities</a></li>
+          <li><a href="https://spartan-native.github.io/spartan-native/">Spartan Native</a></li>
+        </ul>
+        <div class="nav-end">
+          <a class="btn btn-ghost btn-sm" href="https://github.com/Spartan-Native/host-wails">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"
+              />
+            </svg>
+            GitHub
+          </a>
+          <button class="nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============================================================ Hero -->
+      <section class="page-hero">
+        <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="grid-bg" aria-hidden="true"></div>
+        <div class="wrap split">
+          <div>
+            <div class="eyebrow"><span class="num">04</span> Spartan Native · host adapter</div>
+            <h1>Go + Wails, <span class="gradient-text">the real OS.</span></h1>
+            <p class="lead">
+              A Go service that reads the accent, light/dark, contrast, transparency, motion, text size and window
+              focus <strong>from the operating system itself</strong>, and pushes every change to your Angular app as
+              it happens. It also gives the frontend native window controls, menus and dialogs.
+            </p>
+            <div class="meta">
+              <span class="tag ok">Windows · macOS · Linux</span>
+              <span class="tag">Wails v3</span>
+              <span class="tag">passes host-conformance</span>
+            </div>
+            <div class="cta-row" style="margin-top: 28px">
+              <a class="btn btn-primary" href="#quick-start">Get started</a>
+              <div class="install">
+                <span class="dollar">$</span>
+                <span class="cmd" id="install-cmd">npm i @spartan-native/host-wails</span>
+                <button class="copy-btn" data-copy="install-cmd" aria-label="Copy install command"></button>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="code">
+              <div class="code-head">
+                <span class="file">main.go</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+              </div>
+              <pre><code data-lang="go">import spartannative "github.com/spartan-native/host-wails"
+
+app := application.New(application.Options{
+	Services: []application.Service{
+		application.NewService(spartannative.New()),
+	},
+})</code></pre>
+            </div>
+            <div class="code">
+              <div class="code-head">
+                <span class="file">app.config.ts</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+              </div>
+              <pre><code data-lang="ts">import { isWails, wailsHost } from '@spartan-native/host-wails';
+import { webHost } from '@spartan-native/host-web';
+
+provideSpartanNative({ host: isWails() ? wailsHost() : webHost() });</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <nav class="subnav" aria-label="On this page">
+        <div class="wrap">
+          <a href="#how">How it works</a>
+          <a href="#quick-start">Quick start</a>
+          <a href="#reads">What it reads</a>
+          <a href="#capabilities">Capabilities</a>
+          <a href="#services">Window, menus, dialogs</a>
+          <a href="#options">Options</a>
+        </div>
+      </nav>
+
+      <!-- ============================================================ How it works -->
+      <section id="how" class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">How it works</div>
+            <h2>Two halves, one tag.</h2>
+            <p class="lead">
+              A Go module and an npm package, released together from the same git tag. They talk over the Wails
+              runtime: bound methods one way, events the other.
+            </p>
+          </div>
+          <div class="flow">
+            <div class="card reveal">
+              <h3>The Go service reads the OS</h3>
+              <p>
+                One reader per OS: the registry and <code>SystemParametersInfo</code> on Windows, AppKit on macOS, the
+                XDG desktop portal on Linux. It listens for theme changes and polls the settings that send no
+                notification.
+              </p>
+            </div>
+            <div class="card reveal">
+              <h3>Changes cross as events</h3>
+              <p>
+                When something actually changed, the service emits <code>spartan-native:appearance</code>. A chosen
+                native menu item comes back as <code>spartan-native:menu-action</code>. Nothing is sent when nothing
+                changed.
+              </p>
+            </div>
+            <div class="card reveal">
+              <h3><code>wailsHost()</code> feeds the theme</h3>
+              <p>
+                The TypeScript adapter implements the <code>NativeHost</code> contract from
+                <code>@spartan-native/theme</code>. Components never know they run in Wails, so the same frontend
+                still works in a browser.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ============================================================ Quick start -->
+      <section id="quick-start" class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">Quick start</div>
+            <h2>Three steps in an existing Wails v3 app.</h2>
+            <p class="lead">
+              Set up <a href="https://spartan-native.github.io/spartan-native/">Spartan Native</a> first (theme,
+              styles). Then install both halves <strong>at the same version</strong>.
+            </p>
+          </div>
+          <div class="grid grid-3">
+            <div class="stack reveal">
+              <h4>1 · Install</h4>
+              <div class="code">
+                <div class="code-head">
+                  <span class="file">terminal</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+                </div>
+                <pre><code data-lang="bash">npm install @spartan-native/host-wails \
+  @spartan-native/host-web \
+  @wailsio/runtime
+go get github.com/spartan-native/host-wails</code></pre>
+              </div>
+            </div>
+            <div class="stack reveal">
+              <h4>2 · Register the service</h4>
+              <div class="code">
+                <div class="code-head">
+                  <span class="file">main.go</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+                </div>
+                <pre><code data-lang="go">app := application.New(application.Options{
+	Services: []application.Service{
+		application.NewService(spartannative.New()),
+	},
+	// …
+})</code></pre>
+              </div>
+            </div>
+            <div class="stack reveal">
+              <h4>3 · Provide the host</h4>
+              <div class="code">
+                <div class="code-head">
+                  <span class="file">app.config.ts</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+                </div>
+                <pre><code data-lang="ts">export const appConfig = {
+  providers: [
+    provideSpartanNative({
+      host: isWails() ? wailsHost() : webHost(),
+    }),
+  ],
+};</code></pre>
+              </div>
+            </div>
+          </div>
+          <p class="muted reveal" style="margin-top: 28px">
+            For your own title bar, make the window frameless on Windows and Linux and use the hidden-inset title bar
+            on macOS. <code>&lt;sn-title-bar&gt;</code> and <code>&lt;sn-window-controls&gt;</code> from
+            <code>@spartan-native/desktop-ui</code> then drag, minimize, maximize and close the real window.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================================================ What it reads -->
+      <section id="reads" class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">What it reads</div>
+            <h2>Straight from the OS. Live.</h2>
+            <p class="lead">
+              A browser can only guess most of these. The Go service asks the operating system, and reports a change
+              within a second.
+            </p>
+          </div>
+          <div class="table-wrap reveal">
+            <table>
+              <thead>
+                <tr>
+                  <th>Setting</th>
+                  <th>Windows</th>
+                  <th>macOS</th>
+                  <th>Linux</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Accent</td>
+                  <td><code>AccentPalette</code> (the Settings app's accent), else DWM <code>AccentColor</code></td>
+                  <td><code>NSColor.controlAccentColor</code></td>
+                  <td>portal <code>accent-color</code></td>
+                </tr>
+                <tr>
+                  <td>Light / dark</td>
+                  <td><code>AppsUseLightTheme</code></td>
+                  <td><code>AppleInterfaceStyle</code></td>
+                  <td>portal <code>color-scheme</code></td>
+                </tr>
+                <tr>
+                  <td>Contrast</td>
+                  <td>Contrast themes → <code>forced</code></td>
+                  <td>Increase contrast → <code>more</code></td>
+                  <td>portal <code>contrast</code> → <code>more</code></td>
+                </tr>
+                <tr>
+                  <td>Reduce transparency</td>
+                  <td><code>EnableTransparency</code></td>
+                  <td><code>accessibilityDisplayShouldReduceTransparency</code></td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>Reduce motion</td>
+                  <td><code>SPI_GETCLIENTAREAANIMATION</code></td>
+                  <td><code>accessibilityDisplayShouldReduceMotion</code></td>
+                  <td>portal <code>reduced-motion</code></td>
+                </tr>
+                <tr>
+                  <td>Text size</td>
+                  <td><code>TextScaleFactor</code></td>
+                  <td>— (apps set their own)</td>
+                  <td>GNOME <code>text-scaling-factor</code></td>
+                </tr>
+                <tr>
+                  <td>OS &amp; skin</td>
+                  <td><code>RtlGetVersion</code> (build ≥ 22000 → Windows 11)</td>
+                  <td><code>operatingSystemVersion</code></td>
+                  <td><code>XDG_CURRENT_DESKTOP</code> (KDE → Qt skin)</td>
+                </tr>
+                <tr>
+                  <td>Window focus</td>
+                  <td colspan="3">Wails <code>WindowFocus</code> / <code>WindowLostFocus</code> events</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ============================================================ Capabilities -->
+      <section id="capabilities" class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">Capabilities</div>
+            <h2>Honest about each OS.</h2>
+            <p class="lead">
+              <code>Capabilities()</code> reports every key as <code>native</code>, <code>partial</code> or
+              <code>none</code>, and Spartan Native components fall back where something is missing. Hover a cell for
+              the detail.
+            </p>
+          </div>
+          <div class="table-wrap matrix reveal">
+            <table>
+              <thead>
+                <tr>
+                  <th>Capability</th>
+                  <th>Windows</th>
+                  <th>macOS</th>
+                  <th>Linux</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>System accent<span class="grp">Appearance</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n" title="XDG desktop portal">N</span></td>
+                </tr>
+                <tr>
+                  <td>Light / dark<span class="grp">Appearance</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                </tr>
+                <tr>
+                  <td>High contrast<span class="grp">Appearance</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                </tr>
+                <tr>
+                  <td>Reduce transparency<span class="grp">Appearance</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap x" title="The portal has no such setting">X</span></td>
+                </tr>
+                <tr>
+                  <td>Text size<span class="grp">Appearance</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap x" title="macOS has no system text size: apps set their own">X</span></td>
+                  <td><span class="cap p" title="GNOME only">P</span></td>
+                </tr>
+                <tr>
+                  <td>Window focus<span class="grp">Window</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                </tr>
+                <tr>
+                  <td>Mica · vibrancy<span class="grp">Window</span></td>
+                  <td><span class="cap n" title="Mica">N</span></td>
+                  <td><span class="cap n" title="Translucent window">N</span></td>
+                  <td><span class="cap x">X</span></td>
+                </tr>
+                <tr>
+                  <td>Custom title bar<span class="grp">Window</span></td>
+                  <td><span class="cap n" title="Frameless + drag regions">N</span></td>
+                  <td><span class="cap n" title="Hidden-inset title bar">N</span></td>
+                  <td><span class="cap n" title="Frameless + drag regions">N</span></td>
+                </tr>
+                <tr>
+                  <td>Native menus<span class="grp">OS services</span></td>
+                  <td>
+                    <span class="cap p" title="Context menus are native; the app menu reaches only new, framed windows"
+                      >P</span
+                    >
+                  </td>
+                  <td><span class="cap n" title="Global menu bar and context menus">N</span></td>
+                  <td>
+                    <span class="cap p" title="Context menus are native; the app menu reaches only new, framed windows"
+                      >P</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Notifications<span class="grp">OS services</span></td>
+                  <td><span class="cap p" title="Not specified in the contract yet">P</span></td>
+                  <td><span class="cap p" title="Not specified in the contract yet">P</span></td>
+                  <td><span class="cap p" title="Not specified in the contract yet">P</span></td>
+                </tr>
+                <tr>
+                  <td>Taskbar / dock progress<span class="grp">OS services</span></td>
+                  <td><span class="cap x">X</span></td>
+                  <td><span class="cap x">X</span></td>
+                  <td><span class="cap x">X</span></td>
+                </tr>
+                <tr>
+                  <td>File dialogs<span class="grp">OS services</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n" title="Attached to the window as a sheet">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                </tr>
+                <tr>
+                  <td>OS version &amp; skin<span class="grp">Platform</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                  <td><span class="cap n">N</span></td>
+                </tr>
+                <tr>
+                  <td>GTK vs Qt detection<span class="grp">Linux</span></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><span class="cap n" title="XDG_CURRENT_DESKTOP">N</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="legend reveal">
+            <span><span class="cap n">N</span> native</span>
+            <span><span class="cap p">P</span> partial or fallback</span>
+            <span><span class="cap x">X</span> not available: components fall back</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ Services -->
+      <section id="services" class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">Window, menus, dialogs</div>
+            <h2>The OS's own, not imitations.</h2>
+          </div>
+          <div class="grid grid-3">
+            <div class="card reveal">
+              <h3>Window</h3>
+              <p>
+                Focus, <code>minimize()</code>, <code>toggleMaximize()</code>, <code>close()</code> and the maximized
+                state come from the Wails window API. desktop-ui's window buttons use them automatically.
+              </p>
+            </div>
+            <div class="card reveal">
+              <h3>Menus</h3>
+              <p>
+                Application and context menus built from plain <code>MenuItem</code> data: checkbox and radio items,
+                submenus, roles like <code>editMenu</code>, and portable accelerators such as
+                <code>mod+shift+s</code>. <code>&lt;sn-menubar&gt;</code> becomes the macOS global menu bar.
+              </p>
+            </div>
+            <div class="card reveal">
+              <h3>Dialogs</h3>
+              <p>
+                <code>openFile</code>, <code>saveFile</code>, <code>pickFolder</code> and <code>message</code> show
+                the OS's own dialogs, attached to the window (a sheet on macOS). A cancelled dialog gives
+                <code>[]</code> or <code>null</code>, never an error.
+              </p>
+            </div>
+          </div>
+          <div class="code reveal" style="margin-top: 24px">
+            <div class="code-head">
+              <span class="file">backup.component.ts</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+            </div>
+            <pre><code data-lang="ts">const host = inject(NATIVE_HOST);
+
+const [file] = await host.dialogs!.openFile({
+  filters: [{ name: 'Backups', extensions: ['hbk'] }],
+});
+
+const answer = await host.dialogs!.message!({
+  kind: 'question',
+  message: 'Save changes?',
+  buttons: [
+    { id: 'save', label: 'Save' },
+    { id: 'discard', label: "Don't save" },
+    { id: 'cancel', label: 'Cancel' },
+  ],
+  defaultId: 'save',
+  cancelId: 'cancel', // always pass one: GTK can close an alert without a button
+});</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ============================================================ Options -->
+      <section id="options" class="tight">
+        <div class="wrap split top">
+          <div class="reveal">
+            <div class="eyebrow">Options &amp; debugging</div>
+            <h2>Sensible defaults. Two knobs.</h2>
+            <ul class="checks">
+              <li><strong><code>WithSkin</code></strong> forces a skin, for example from a user setting</li>
+              <li>
+                <strong><code>WithPollInterval</code></strong> sets how often settings without a change notification
+                are checked (default 1 s; zero turns polling off)
+              </li>
+              <li><strong><code>SPARTAN_NATIVE_DEBUG=1</code></strong> logs every call and every change</li>
+              <li>
+                <strong>Tests without Wails:</strong> <code>wailsHost({ runtime: fake })</code> and
+                <code>describeHostConformance</code> from <code>@spartan-native/host-conformance</code>
+              </li>
+            </ul>
+          </div>
+          <div class="code reveal">
+            <div class="code-head">
+              <span class="file">main.go</span><button class="copy-btn" data-copy aria-label="Copy"></button>
+            </div>
+            <pre><code data-lang="go">spartannative.New(
+	spartannative.WithSkin("gtk"),
+	spartannative.WithPollInterval(500*time.Millisecond),
+)</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ Feels native -->
+      <section class="tight">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">Built to be trusted</div>
+            <h2>Small, tested, and checked from both sides.</h2>
+          </div>
+          <div class="behaviors reveal">
+            <div>
+              <span class="ico">✓</span>
+              <h4>Conformance suite</h4>
+              <p>The adapter passes <code>@spartan-native/host-conformance</code>, like every host.</p>
+            </div>
+            <div>
+              <span class="ico">⇄</span>
+              <h4>Shared fixtures</h4>
+              <p>Go and TypeScript are tested against the same names and JSON values.</p>
+            </div>
+            <div>
+              <span class="ico">⏱</span>
+              <h4>Never hangs</h4>
+              <p>Portal reads give up after 2 s; a late D-Bus session is picked up later.</p>
+            </div>
+            <div>
+              <span class="ico">Δ</span>
+              <h4>Quiet</h4>
+              <p>An event only when a value actually changed. No reload, no flicker.</p>
+            </div>
+          </div>
+          <p class="muted reveal" style="margin-top: 24px">
+            Verified end to end on macOS with the Harbor sample app. The Windows and Linux readers compile, vet and
+            pass their tests in CI, but haven't been tried in a real app window yet.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================================================ CTA -->
+      <section class="tight">
+        <div class="wrap">
+          <div class="cta-band reveal">
+            <h2>One frontend. <span class="gradient-text">A Go app that belongs on every desktop.</span></h2>
+            <p class="lead">Stock spartan/ui components, seven native skins, and the user's own settings, live.</p>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="https://github.com/Spartan-Native/host-wails">View on GitHub</a>
+              <a class="btn btn-ghost" href="https://spartan-native.github.io/spartan-native/">Spartan Native</a>
+              <a class="btn btn-ghost" href="https://github.com/Spartan-Native/harbor">See the sample app</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap foot">
+        <div>
+          <a class="logo" href="./"><img src="assets/logo.svg" alt="" width="28" height="28" />host-wails</a>
+          <p class="fine">
+            Part of Spartan Native. Platform names are trademarks of their respective owners; Spartan Native is not
+            affiliated with or endorsed by any of them.
+          </p>
+        </div>
+        <div>
+          <h5>host-wails</h5>
+          <ul>
+            <li><a href="https://github.com/Spartan-Native/host-wails">GitHub</a></li>
+            <li><a href="https://www.npmjs.com/package/@spartan-native/host-wails">npm package</a></li>
+            <li><a href="https://pkg.go.dev/github.com/spartan-native/host-wails">Go reference</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Spartan Native</h5>
+          <ul>
+            <li><a href="https://spartan-native.github.io/spartan-native/">Website</a></li>
+            <li><a href="https://spartan-native.github.io/spartan-native/hosts.html">Host adapters</a></li>
+            <li><a href="https://github.com/Spartan-Native/spartan-native">GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Other hosts</h5>
+          <ul>
+            <li><a href="https://github.com/Spartan-Native/host-tauri">Rust + Tauri</a></li>
+            <li><a href="https://github.com/Spartan-Native/host-dotnet">.NET + Photino</a></li>
+            <li><a href="https://github.com/Spartan-Native/harbor">Harbor sample app</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

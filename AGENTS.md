@@ -11,6 +11,7 @@ Instructions for AI coding agents working in this repository. (`npm/projects/hos
 - **`internal/debug/`:** `SPARTAN_NATIVE_DEBUG` logging.
 - **`npm/`:** the Angular CLI workspace (`package.json`, `angular.json`, `.nvmrc`, release script in `scripts/`). Run npm commands from here.
 - **`npm/projects/host-wails/`:** the npm package `@spartan-native/host-wails`, built with ng-packagr into `npm/dist/host-wails`.
+- **`site/`:** the project page on GitHub Pages (plain HTML, CSS and JS, deployed by `pages.yml`). Its styles and script are trimmed copies of the spartan-native site's `site/assets/`, so it matches that site. Update it when what the README says about the adapter changes.
 
 ## Keep the two halves in sync
 
