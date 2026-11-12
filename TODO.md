@@ -4,16 +4,16 @@ Left over from moving host-wails out of spartan-native. The repository is create
 
 ## Before releasing
 
-- [ ] Wait for spartan-native's `0.1.0` release. **Check that it did not publish `@spartan-native/host-wails@0.1.0`**: the tag was made before the split, so its workflow still includes the old host-wails. If it did, delete that package version (or the whole package) on GitHub Packages, or release this repository as `v0.1.1` instead (and change Harbor's `^0.1.0` to match).
-- [ ] spartan-native's packages (theme, host-conformance) give this repository **read** access under **Manage Actions access**.
-- [ ] In `npm/`: `npm install` (needs a token with `read:packages`), commit `npm/package-lock.json`, push. CI (`ci.yml`) should go green: Go tests + vet on macOS, npm tests + build.
+- [ ] Wait for spartan-native's `0.2.0` packages to be on npmjs.org (`npm view @spartan-native/theme@0.2.0`).
+- [ ] Make this repository public on GitHub (the Go module and npm provenance both rely on it).
+- [ ] Add the repository secret `NPM_TOKEN`: a granular npm access token with publish rights on the `@spartan-native` scope. After the first release, set up trusted publishing for `@spartan-native/host-wails` on npmjs.com and delete the secret.
+- [ ] In `npm/`: `npm install`, commit `npm/package-lock.json`, push. CI (`ci.yml`) should go green: Go tests + vet, npm tests + build.
 
 ## Release
 
-- [ ] Tag `v0.1.0` on `main` and push the tag. `release.yml` publishes `@spartan-native/host-wails@0.1.0` to GitHub Packages; the tag itself releases the Go module `github.com/spartan-native/host-wails@v0.1.0`.
-- [ ] Check that the published package is linked to this repository (the `repository` field from `npm/scripts/stamp-release.mjs`), and give the `harbor` repository **read** access to it under **Manage Actions access**.
-- [ ] Check `go get github.com/spartan-native/host-wails@v0.1.0` works from another module (with `GOPRIVATE=github.com/spartan-native/*`).
+- [ ] Tag `v0.2.0` on `main` and push the tag (same minor as spartan-native; the peer range is `^0.2.0`). `release.yml` publishes `@spartan-native/host-wails@0.2.0` to npmjs.org; the tag itself releases the Go module `github.com/spartan-native/host-wails@v0.2.0`.
+- [ ] Check `npm view @spartan-native/host-wails` shows the version with provenance, and `go get github.com/spartan-native/host-wails@v0.2.0` works from another module (no `GOPRIVATE` needed).
 
 ## After
 
-- [ ] Harbor needs a fine-grained token with **Contents: read** on this repository as its `HOST_WAILS_TOKEN` secret, so its CI can fetch the Go module.
+- [ ] Harbor: drop its `@spartan-native` GitHub Packages `.npmrc` line and any `HOST_WAILS_TOKEN` / `GOPRIVATE` setup, and move to `^0.2.0`.

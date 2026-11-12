@@ -10,7 +10,6 @@ Install the npm package and the Go module **at the same version**; they're relea
 
 ```bash
 npm install @spartan-native/host-wails @spartan-native/host-web @wailsio/runtime
-go env -w GOPRIVATE=github.com/spartan-native/*   # private repo: skip the public module proxy
 go get github.com/spartan-native/host-wails@v1.2.3
 ```
 

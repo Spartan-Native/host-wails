@@ -13,11 +13,8 @@ Both halves are released together from one tag, so **use the same version of eac
 
 ## Set up
 
-The Go module lives in a private GitHub repository, so tell Go not to use the public module proxy for it and give git a token that can read it (the same token as for the npm package works):
-
 ```bash
-go env -w GOPRIVATE=github.com/spartan-native/*
-git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+npm install @spartan-native/host-wails @spartan-native/host-web @wailsio/runtime
 go get github.com/spartan-native/host-wails@v1.2.3    # same version as the npm package
 ```
 

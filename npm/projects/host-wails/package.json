@@ -10,11 +10,14 @@
     "desktop"
   ],
   "peerDependencies": {
-    "@spartan-native/theme": "^0.1.0",
+    "@spartan-native/theme": "^0.2.0",
     "@wailsio/runtime": "^3.1.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -1,7 +1,7 @@
 # Releases both halves of the adapter from one tag:
 #   - the Go module github.com/spartan-native/host-wails is released by the tag itself
 #     (go get github.com/spartan-native/host-wails@v1.2.3); nothing to upload,
-#   - the npm package @spartan-native/host-wails is published to GitHub Packages.
+#   - the npm package @spartan-native/host-wails is published to npmjs.org.
 #
 # Release tags (Go only recognizes tags that start with "v"):
 #   v1.2.3                        -> npm 1.2.3 on dist-tag "latest"
@@ -10,6 +10,19 @@
 # Any other tag publishes nothing.
 #
 #   git tag v1.2.3 && git push origin v1.2.3
+#
+# npm authentication, either:
+#   - Trusted publishing (preferred): on npmjs.com, in the package's settings, add this
+#     repository and workflow file (release.yml) as a trusted publisher. No secret needed.
+#     A package must exist before it can have a trusted publisher, so the first release
+#     uses a token.
+#   - A granular access token with publish rights on the @spartan-native scope, stored as the
+#     repository secret NPM_TOKEN. Delete the secret once trusted publishing is set up.
+#
+# Provenance statements are added while the repository is public (npm refuses them for
+# private repositories).
+#
+# Re-running the workflow is safe: a version already on npm is skipped.
 
 name: Release
 
@@ -57,7 +70,6 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-      packages: read
 
   publish:
     name: Publish npm package
@@ -68,7 +80,7 @@ jobs:
         working-directory: npm
     permissions:
       contents: read
-      packages: write
+      id-token: write # npm trusted publishing and provenance
     env:
       VERSION: ${{ needs.version.outputs.version }}
       DIST_TAG: ${{ needs.version.outputs.dist-tag }}
@@ -80,12 +92,9 @@ jobs:
           node-version-file: npm/.nvmrc
           cache: npm
           cache-dependency-path: npm/package-lock.json
-          registry-url: https://npm.pkg.github.com
-          scope: '@spartan-native'
+          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm ci
 
       - name: Build
@@ -94,7 +103,14 @@ jobs:
       - name: Stamp version ${{ env.VERSION }}
         run: npm run stamp-release -- "$VERSION"
 
-      - name: Publish to GitHub Packages (${{ env.DIST_TAG }})
+      - name: Publish to npm (${{ env.DIST_TAG }})
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish dist/host-wails --tag "$DIST_TAG"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PROVENANCE: ${{ github.event.repository.private && '--no-provenance' || '--provenance' }}
+        run: |
+          name=$(node -p "require('./dist/host-wails/package.json').name")
+          if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+            echo "$name@$VERSION is already on npm, skipping."
+            exit 0
+          fi
+          npm publish dist/host-wails --tag "$DIST_TAG" --access public $PROVENANCE

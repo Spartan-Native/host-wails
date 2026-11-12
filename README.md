@@ -9,7 +9,7 @@ It has two halves that are released together from one git tag:
 | Half | Where | What it does | Installed with |
 | --- | --- | --- | --- |
 | **Go module** `github.com/spartan-native/host-wails` | repository root | A Wails service that reads the OS settings, watches for changes and shows native menus and dialogs | `go get github.com/spartan-native/host-wails@v1.2.3` |
-| **npm package** `@spartan-native/host-wails` | `npm/` | `wailsHost()`, the `NativeHost` implementation the Angular app talks to, which calls the Go service over the Wails runtime | `npm install @spartan-native/host-wails@1.2.3` (GitHub Packages) |
+| **npm package** `@spartan-native/host-wails` | `npm/` | `wailsHost()`, the `NativeHost` implementation the Angular app talks to, which calls the Go service over the Wails runtime | `npm install @spartan-native/host-wails@1.2.3` |
 
 How to use it in an app, and what each OS reports: [`npm/projects/host-wails/README.md`](npm/projects/host-wails/README.md). Instructions for AI agents building apps with it: [`npm/projects/host-wails/AGENTS.md`](npm/projects/host-wails/AGENTS.md) (it ships in the npm package). Instructions for agents working on this repository: [`AGENTS.md`](AGENTS.md).
 
@@ -87,7 +87,7 @@ macOS reads AppKit through **cgo**, so building on macOS needs the Xcode Command
 | `@spartan-native/host-conformance` | dev | The shared test suite every host adapter must pass |
 | Angular 22, ng-packagr, Vitest, jsdom | dev | Building and testing the package |
 
-The `@spartan-native/*` packages come from the spartan-native repository and are published to **GitHub Packages**, not npmjs.org.
+The `@spartan-native/*` packages come from the spartan-native repository and are published to npmjs.org, like this one.
 
 ## Develop
 
@@ -96,13 +96,9 @@ You need:
 - **Go 1.26+**
 - **Node 24.15+ or 26** (`npm/.nvmrc`) and **npm 11** (`engine-strict` is on)
 - On macOS, the **Xcode Command Line Tools** (for cgo)
-- A GitHub token with `read:packages`, to install `@spartan-native/*`
-
-Log in to GitHub Packages once, then install:
 
 ```bash
 cd npm
-npm login --scope=@spartan-native --auth-type=legacy --registry=https://npm.pkg.github.com
 npm install
 ```
 
@@ -126,7 +122,7 @@ npm install ../host-wails/npm/dist/host-wails     # after npm run build in host-
 
 ## Release
 
-Push a tag. `.github/workflows/release.yml` runs CI, then publishes the npm package to GitHub Packages. The tag itself is the Go module's version.
+Push a tag. `.github/workflows/release.yml` runs CI, then publishes the npm package to npmjs.org (with an `NPM_TOKEN` secret, or trusted publishing once the package exists; see the comment at the top of the workflow). The tag itself is the Go module's version.
 
 ```bash
 git tag v1.2.3 && git push origin v1.2.3                 # npm "latest"

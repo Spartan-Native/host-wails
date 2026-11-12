@@ -48,10 +48,6 @@ jobs:
     defaults:
       run:
         working-directory: npm
-    permissions:
-      contents: read
-      # Installs @spartan-native/theme and @spartan-native/host-conformance from GitHub Packages.
-      packages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -60,12 +56,8 @@ jobs:
           node-version-file: npm/.nvmrc
           cache: npm
           cache-dependency-path: npm/package-lock.json
-          registry-url: https://npm.pkg.github.com
-          scope: '@spartan-native'
 
       - name: Install dependencies
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm ci
 
       - name: Test (adapter + host-conformance suite)
